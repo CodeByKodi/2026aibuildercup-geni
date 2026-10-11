@@ -1,0 +1,36 @@
+# Secrets and local configuration: never committed
+.env
+.env.*
+!.env.example
+credentials*.json
+service-account*.json
+*-key.json
+*.json.token
+token.json
+client_secret*.json
+*.pem
+*.p12
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Test output
+playwright-report/
+test-results/
+blob-report/
+
+# Logs, OS and editor files
+*.log
+.DS_Store
+.vscode/
+.idea/
+.claude/

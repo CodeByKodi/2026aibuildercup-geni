@@ -1,0 +1,15 @@
+# Runtime dependencies of the WorkPilot API (Cloud Run image).
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-dotenv>=1.0.1
+google-adk>=1.0.0
+google-genai>=1.0.0
+firebase-admin>=6.5.0
+google-cloud-discoveryengine>=0.20.2
+google-cloud-documentai>=3.16.0
+google-cloud-bigquery>=3.38.0
+google-api-python-client>=2.150.0
+pypdf>=5.0.0
+python-docx>=1.1.2
+scikit-learn>=1.5.2
+pandas>=2.2.3

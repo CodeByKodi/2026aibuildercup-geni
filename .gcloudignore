@@ -1,0 +1,5 @@
+# Upload for `gcloud run deploy --source`: the repository minus local output and secrets.
+#!include:.gitignore
+.git
+tests/
+docs/
