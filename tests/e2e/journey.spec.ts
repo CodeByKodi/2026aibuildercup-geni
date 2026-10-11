@@ -84,7 +84,7 @@ test.describe("React · question to human gate", () => {
   });
 
   test("backward navigation keeps generated state", async ({ page }) => {
-    await ask(page, { scenario: "sec-217" });
+    await ask(page, { scenario: "go-live" });
     await analyze(page);
     await prepareContracts(page);
     for (const id of ["decision", "analyze", "knowledge", "start", "actions"]) await step(page, id);
