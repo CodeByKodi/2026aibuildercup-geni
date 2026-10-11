@@ -84,7 +84,19 @@ test.describe("React · three-minute demo path", () => {
     await expect(tid(page, "readiness-status")).toHaveText(expected);
     await expect(tid(page, "outcome-evidence")).toHaveCount(n);
     await expect(tid(page, "agent-message")).toHaveAttribute("data-ok", "true");
-    await page.screenshot({ path: "screenshots/react-demo-outcome.png", fullPage: true });
+    await page.screenshot({ path: "test-results/demo-outcome.png", fullPage: true });
+
+    // Backward through every step, then forward again: the recorded data stays the same.
+    for (const id of ["approval", "actions", "decision", "analyze", "knowledge", "start"]) await step(page, id);
+    await step(page, "analyze");
+    await expect(tid(page, "blocker-card")).toHaveCount(blockers);
+    await step(page, "actions");
+    await expect(tid(page, "contract")).toHaveCount(n);
+    await step(page, "approval");
+    for (let i = 0; i < n; i++) await expect(tid(page, "approval-row").nth(i)).toHaveAttribute("data-execution", "Executed");
+    await step(page, "outcome");
+    await expect(tid(page, "readiness-status")).toHaveText(expected);
+    await expect(tid(page, "outcome-evidence")).toHaveCount(n);
 
     // Decision Memory: expected and actual. My Sessions: the stage and readiness.
     await tid(page, "nav-memory").click();
