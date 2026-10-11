@@ -105,11 +105,11 @@ def test_compose_followup_quotes_cited_evidence():
 
 
 def test_owner_email_mapping(set_config):
-    assert owner_email("mei@corp.com") == "mei@corp.com"
+    assert owner_email("mei@example.com") == "mei@example.com"
     assert owner_email("Mei") == "mei@example.com"
-    set_config(owner_email_map="Mei=mei.chen@corp.com", default_owner_email_domain="corp.com")
-    assert owner_email("mei") == "mei.chen@corp.com"
-    assert owner_email("Arjun Rao") == "arjun.rao@corp.com"
+    set_config(owner_email_map="Mei=mei.chen@example.com", default_owner_email_domain="example.com")
+    assert owner_email("mei") == "mei.chen@example.com"
+    assert owner_email("Arjun Rao") == "arjun.rao@example.com"
 
 
 def test_parse_due_date():
