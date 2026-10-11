@@ -159,6 +159,10 @@ def chunk_sections(text: str, size: int = 900) -> List[Tuple[str, str]]:
 
 
 _IDENTIFIER = re.compile(r"\b(?=[A-Za-z0-9-]*\d)(?=[A-Za-z0-9-]*[A-Za-z])[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\b")
+# Ordinary words that mix digits and letters: ordinals (18th) and numbers with a unit (5s, 14min, 3pm).
+_NOT_AN_IDENTIFIER = re.compile(
+    r"^\d+(st|nd|rd|th|s|ms|sec|secs|m|min|mins|h|hr|hrs|d|am|pm|x|k|kb|mb|gb|tb|pct)$", re.I
+)
 
 
 def missing_identifiers(query: str, corpus: str) -> List[str]:
@@ -170,6 +174,8 @@ def missing_identifiers(query: str, corpus: str) -> List[str]:
     haystack = corpus.lower()
     missing = []
     for token in _IDENTIFIER.findall(query or ""):
+        if _NOT_AN_IDENTIFIER.match(token):
+            continue
         if not re.search(rf"(?<![a-z0-9]){re.escape(token.lower())}(?![a-z0-9])", haystack):
             missing.append(token)
     return missing

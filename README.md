@@ -6,7 +6,7 @@ AI Builder Cup 2026 · Team **GENI** · Problem statement: **Future of Work & En
 
 | | |
 |---|---|
-| **Live prototype** | _Final Cloud Run URL: added after the clean deployment_ |
+| **Live prototype** | **https://workpilot-geni-475836937080.asia-south1.run.app** |
 | **Repository** | https://github.com/CodeByKodi/2026aibuildercup-geni |
 | **Demo video** | _Link to be added_ |
 
@@ -171,7 +171,14 @@ and the impact estimate. Talking points: [docs/demo-flow.md](docs/demo-flow.md).
 
 ## Live prototype
 
-_Final Cloud Run URL: added after the clean deployment._
+**FINAL LIVE PROTOTYPE: https://workpilot-geni-475836937080.asia-south1.run.app**
+
+Public, no sign-in. Deployed from this repository with `./deploy-cloud-run.sh <project-id> asia-south1 workpilot-geni`
+on Cloud Run (asia-south1), with Gemini, ADK, Vertex AI Search, Document AI, Firestore,
+BigQuery and Gmail/Calendar live; check **System Status** in the app.
+
+- GitHub repository: https://github.com/CodeByKodi/2026aibuildercup-geni
+- Demo video: _link to be added_
 
 ## Repository and submission notes
 

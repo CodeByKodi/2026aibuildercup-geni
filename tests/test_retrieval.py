@@ -36,6 +36,9 @@ def test_out_of_scope_identifier_returns_not_found(sample_docs):
     assert r.search("What is the DR budget for v13?") == []
     assert r.not_found.startswith("Not found in workspace sources") and "v13" in r.not_found
     assert missing_identifiers("Who owns SEC-217 for v12.4?", r.local.corpus) == []
+    # Ordinals and numbers with units are words, not identifiers (an agent wrote "18th").
+    assert missing_identifiers("What must close in UAT (PAY-482) before the 18th, and is p95 under 1.5s by 3pm?", r.local.corpus) == []
+    assert missing_identifiers("Who owns SEC-999?", r.local.corpus) == ["SEC-999"]
 
 
 def test_local_retriever_drops_noise_scores(sample_docs):
