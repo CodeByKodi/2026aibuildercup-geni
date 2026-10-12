@@ -8,7 +8,7 @@ AI Builder Cup 2026 · Team **GENI** · Problem statement: **Future of Work & En
 |---|---|
 | **Live prototype** | **https://workpilot-geni-475836937080.asia-south1.run.app** |
 | **Repository** | https://github.com/CodeByKodi/2026aibuildercup-geni |
-| **Demo video** | **[Watch the 2:32 demo](https://cdn.jsdelivr.net/gh/CodeByKodi/2026aibuildercup-geni@main/demo/workpilot-demo.mp4)** (plays in the browser) · [file in this repo](demo/workpilot-demo.mp4) · [storyboard and narration](demo/STORYBOARD.md) |
+| **Demo video** | **[Watch the 2:32 demo](https://cdn.jsdelivr.net/gh/CodeByKodi/2026aibuildercup-geni@main/demo/GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo.mp4)** (plays in the browser) · [file in this repo](demo/GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo.mp4) · [storyboard and narration](demo/STORYBOARD.md) |
 
 The live prototype is public, with no sign-in, on Cloud Run (asia-south1), deployed from this repository.
 
@@ -49,7 +49,7 @@ moves to **READY FOR APPROVAL**. Go-live approval itself always stays with a per
 
 ## Demo
 
-The [2:32 demo video](https://cdn.jsdelivr.net/gh/CodeByKodi/2026aibuildercup-geni@main/demo/workpilot-demo.mp4) walks the scenario above on the live URL, from the question to
+The [2:32 demo video](https://cdn.jsdelivr.net/gh/CodeByKodi/2026aibuildercup-geni@main/demo/GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo.mp4) walks the scenario above on the live URL, from the question to
 **NOT READY → READY FOR APPROVAL** and the impact. Clicks and talking points for a live run are in
 [docs/demo-flow.md](docs/demo-flow.md). [`demo/record-demo.mjs`](demo/record-demo.mjs) re-records the
 video against any deployment ([storyboard](demo/STORYBOARD.md)).

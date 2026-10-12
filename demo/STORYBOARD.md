@@ -1,6 +1,6 @@
 # WorkPilot AI · 3-minute demo video
 
-**Watch:** [workpilot-demo.mp4](workpilot-demo.mp4) (2:32, 1920×1080, Indian English narration with captions).
+**Watch:** [GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo.mp4](GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo.mp4) (2:32, 1920×1080, Indian English narration with captions).
 
 Knowledge → Decision → **Approval** → Action → Outcome → Impact, recorded from the live Cloud Run deployment.
 
