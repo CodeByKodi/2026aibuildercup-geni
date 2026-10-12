@@ -421,7 +421,7 @@ for (let i = 0; i < frames.length; i++) {
 }
 list.push(`file '${frames[frames.length - 1].file}'`)
 fs.writeFileSync(path.join(OUT, 'frames.txt'), list.join('\n'))
-const silent = path.join(OUT, 'workpilot-demo-captions.mp4')
+const silent = path.join(OUT, 'GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo_captions-only.mp4')
 execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'concat', '-safe', '0', '-i', path.join(OUT, 'frames.txt'),
   '-vf', 'fps=30,scale=1920:1080:flags=lanczos,format=yuv420p', '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-movflags', '+faststart', silent])
 
@@ -435,7 +435,7 @@ if (VOICE) {
     filters.push(`[${i + 1}:a]${CLIP_FILTER},adelay=${ms}|${ms}[a${i}]`)
   })
   const mix = `${filters.join(';')};${cues.map((_, i) => `[a${i}]`).join('')}amix=inputs=${cues.length}:normalize=0,${MIX_FILTER}[aout]`
-  final = path.join(OUT, 'workpilot-demo.mp4')
+  final = path.join(OUT, 'GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo.mp4')
   execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', silent, ...inputs, '-filter_complex', mix, '-map', '0:v', '-map', '[aout]',
     '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-shortest', '-movflags', '+faststart', final])
 }

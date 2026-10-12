@@ -34,8 +34,8 @@ Output in `--out`:
 
 | File | What |
 |---|---|
-| `workpilot-demo.mp4` | Final video: captions and synthetic narration |
-| `workpilot-demo-captions.mp4` | Same video, silent: for recording your own voice-over |
+| `GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo.mp4` | Final video: captions and synthetic narration |
+| `GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo_captions-only.mp4` | Same video, silent: for recording your own voice-over |
 | `timeline.md` | Step and narration cue times for this take, and the facts read from the screen |
 
 ## Screen sequence and timing (published take, 12 Oct 2026, 2:32, session `SES-f14595b573a6`)
@@ -92,5 +92,5 @@ length of each sped-up wait is fixed, so the total stays about the same.
 >
 > WorkPilot AI. From knowledge to outcomes, with people in control.
 
-That is about 330 words. To use your own voice, record it over `workpilot-demo-captions.mp4`, using the cue
+That is about 330 words. To use your own voice, record it over `GENI_WorkPilot-AI_Future-of-Work-and-Enterprise-Productivity_AI-Builder-Cup-2026_Demo_captions-only.mp4`, using the cue
 times in `timeline.md`.
