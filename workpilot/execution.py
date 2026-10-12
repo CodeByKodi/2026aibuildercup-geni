@@ -306,7 +306,7 @@ def compose_followup(action: Dict[str, Any], decision: Optional[DecisionRecord])
         f"{decision_lines}\n"
         f"Approved by: {action.get('approved_by') or 'human reviewer'}\n"
         f"Action ID: {action.get('action_id', '')}\n\n"
-        f"— WorkPilot AI · Know → Decide → Approve → Act → Measure\n"
+        f"— WorkPilot AI · Knowledge → Decision → Approval → Outcome\n"
     )
     return subject, body
 

@@ -40,6 +40,7 @@ def fresh_state(session_id: str = "") -> Dict[str, Any]:
         "scenario_id": "go-live",
         "agent_trace": [],
         "agent_message": None,
+        "proof": {},
         "session_created_at": utc_now(),
     }
 
@@ -249,6 +250,7 @@ def session_payload(state: Mapping[str, Any]) -> Dict[str, Any]:
         "persona": state.get("persona") or scenario.PERSONA_LINE,
         "agent_trace": list(state.get("agent_trace") or []),
         "agent_message": state.get("agent_message"),
+        "proof": dict(state.get("proof") or {}),
         "stage": stage(state),
         "readiness": (presentation.verdict((state.get("last_analysis") or {}).get("decision"), contracts) or {}).get("status", ""),
         "created_at": state.get("session_created_at") or "",
@@ -283,6 +285,7 @@ def restore(stored: Mapping[str, Any], current_actions: Optional[List[Dict[str, 
         "scenario_id": stored.get("scenario_id") or "go-live",
         "agent_trace": list(stored.get("agent_trace") or []),
         "agent_message": stored.get("agent_message"),
+        "proof": dict(stored.get("proof") or {}),
         "session_decision_id": stored.get("decision_id") or "",
         "session_action_ids": list(stored.get("selected_action_ids") or []),
         "retrieved": stored.get("retrieved"),

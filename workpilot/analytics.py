@@ -229,3 +229,33 @@ def _insert(row: Dict[str, Any], session_id: str) -> bool:
     with _COUNT_LOCK:
         _WRITTEN[session_id] = _WRITTEN.get(session_id, 0) + 1
     return True
+
+
+_COUNT_CACHE: Dict[str, Tuple[float, int]] = {}
+
+
+def decision_event_count(decision_id: str, ttl_s: float = 30.0) -> Optional[int]:
+    """Rows in the BigQuery events table for one decision, or None when BigQuery is off or the query fails.
+
+    Streaming inserts can take a few seconds to become visible to queries.
+    """
+    import time
+
+    if not configured() or not decision_id:
+        return None
+    hit = _COUNT_CACHE.get(decision_id)
+    if hit and time.monotonic() - hit[0] < ttl_s:
+        return hit[1]
+    try:
+        from google.cloud import bigquery
+
+        job = _client().query(
+            f"SELECT COUNT(*) AS n FROM `{table_id()}` WHERE decision_id = @d",
+            job_config=bigquery.QueryJobConfig(query_parameters=[bigquery.ScalarQueryParameter("d", "STRING", decision_id)]),
+        )
+        n = int(next(iter(job.result())).n)
+    except Exception as exc:
+        log.warning("BigQuery count failed: %s", exc)
+        return None
+    _COUNT_CACHE[decision_id] = (time.monotonic(), n)
+    return n

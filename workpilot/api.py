@@ -13,6 +13,7 @@ from __future__ import annotations
 import contextvars
 import json
 import logging
+import os
 import queue
 import threading
 import time
@@ -112,6 +113,20 @@ def refresh_and_save(state: Dict[str, Any]) -> None:
     """After a human or agent step: re-read contracts from the store, then persist the session."""
     state["actions"] = state_store.load_actions()
     workflow_session.save(state)
+
+
+def _trace_id(request: Optional[Request]) -> str:
+    """Cloud Run's request trace id (X-Cloud-Trace-Context: TRACE_ID/SPAN;o=1), when present."""
+    if request is None:
+        return ""
+    return (request.headers.get("x-cloud-trace-context") or "").split("/")[0][:64]
+
+
+def _mark(state: Dict[str, Any], step: str, started: float, request: Optional[Request], **extra: Any) -> None:
+    """Record when a step ran, how long it took on the server, and its trace id. Saved with the session."""
+    proof = dict(state.get("proof") or {})
+    proof[step] = {"at": utc_now(), "ms": int((time.perf_counter() - started) * 1000), "trace": _trace_id(request), **extra}
+    state["proof"] = proof
 
 
 def approver_name(state: Dict[str, Any]) -> str:
@@ -256,6 +271,9 @@ def analysis_view(state: Dict[str, Any], board: List[Dict[str, Any]]) -> Optiona
     }
 
 
+_TIMED_STEPS = ("retrieve", "analyze", "contracts", "execute", "resume")
+
+
 def impact_view(state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     decision_id = state.get("session_decision_id") or ""
     if not decision_id:
@@ -266,7 +284,15 @@ def impact_view(state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         log.exception("impact computation failed")
         return None
     m = impact["metrics"]
+    # Manual baseline (formula estimate) next to WorkPilot's own run time (measured on the server).
+    proof = state.get("proof") or {}
+    workpilot_ms = sum(int((proof.get(k) or {}).get("ms") or 0) for k in _TIMED_STEPS)
+    baseline_min = float(m.get("estimated_total_time_saved_hours") or 0) * 60
     return {
+        "baseline_minutes": round(baseline_min, 1),
+        "workpilot_seconds": round(workpilot_ms / 1000, 1),
+        "workpilot_steps": [k for k in _TIMED_STEPS if k in proof],
+        "net_minutes": round(max(baseline_min - workpilot_ms / 60000, 0), 1),
         "hours": m.get("estimated_total_time_saved_hours"),
         "hours_label": presentation.hours_label(m.get("estimated_total_time_saved_hours")),
         "tiles": presentation.impact_tiles(m),
@@ -447,8 +473,9 @@ def impact(session_id: str) -> Dict[str, Any]:
 
 
 @app.post("/api/sessions/{session_id}/retrieve")
-def retrieve(session_id: str, body: Retrieve) -> Dict[str, Any]:
+def retrieve(session_id: str, body: Retrieve, request: Request) -> Dict[str, Any]:
     with _lock(session_id):
+        started = time.perf_counter()
         state = load_state(session_id)
         _apply_question(state, body.question, body.scenario_id)
         try:
@@ -456,6 +483,8 @@ def retrieve(session_id: str, body: Retrieve) -> Dict[str, Any]:
         except Exception as exc:
             log.exception("retrieval failed")
             raise HTTPException(502, f"Retrieval failed: {type(exc).__name__}: {exc}")
+        retrieved = state.get("retrieved") or {}
+        _mark(state, "retrieve", started, request, mode=retrieved.get("mode", ""), passages=len(retrieved.get("hits") or []))
         refresh_and_save(state)
         return session_view(state)
 
@@ -465,7 +494,7 @@ def _ndjson(obj: Dict[str, Any]) -> bytes:
 
 
 @app.post("/api/sessions/{session_id}/analyze")
-def analyze(session_id: str) -> StreamingResponse:
+def analyze(session_id: str, request: Request) -> StreamingResponse:
     """Decide: the agent's turn, streamed as NDJSON stage events with server-measured times."""
     state = load_state(session_id)
     events: "queue.Queue[Dict[str, Any]]" = queue.Queue()
@@ -487,6 +516,7 @@ def analyze(session_id: str) -> StreamingResponse:
                         question, retriever(current), progress=progress, session_id=session_id, documents=current["documents"]
                     )
                 )
+                _mark(current, "analyze", started, request, mode=(current.get("last_analysis") or {}).get("ai_mode", ""))
                 refresh_and_save(current)
                 events.put({"type": "done", "at_ms": elapsed_ms(), "session": session_view(current)})
             except Exception as exc:
@@ -561,8 +591,9 @@ def remove_upload(session_id: str, source_id: str) -> Dict[str, Any]:
 
 
 @app.post("/api/sessions/{session_id}/contracts")
-def contracts(session_id: str) -> Dict[str, Any]:
+def contracts(session_id: str, request: Request) -> Dict[str, Any]:
     with _lock(session_id):
+        started = time.perf_counter()
         state = load_state(session_id)
         analysis = state.get("last_analysis") or {}
         record = analysis.get("decision_record")
@@ -576,6 +607,7 @@ def contracts(session_id: str) -> Dict[str, Any]:
                 documents=state["documents"], trace=state.get("agent_trace"),
             )
         )
+        _mark(state, "contracts", started, request, mode=state.get("contracts_mode", ""))
         refresh_and_save(state)
         return session_view(state)
 
@@ -628,7 +660,7 @@ def execute(session_id: str, action_id: str, body: Execute) -> Dict[str, Any]:
 
 
 @app.post("/api/sessions/{session_id}/execute-approved")
-def execute_approved(session_id: str, body: Execute) -> Dict[str, Any]:
+def execute_approved(session_id: str, body: Execute, request: Request) -> Dict[str, Any]:
     """A person runs every approved, not-yet-executed contract in one click. Each becomes a real
     Gmail draft (never sent) or Calendar event; EXECUTED only where Google returns an ID."""
     if body.type not in (execution.GMAIL_DRAFT, execution.CALENDAR_FOLLOWUP):
@@ -641,10 +673,12 @@ def execute_approved(session_id: str, body: Execute) -> Dict[str, Any]:
         ]
         if not todo:
             raise HTTPException(409, "No approved action is waiting to run")
+        started = time.perf_counter()
         results = []
         for action in todo:
             out = workflow.execute_action(action["action_id"], body.type)
             results.append({"action_id": action["action_id"], "ok": bool(out.get("ok")), "message": out.get("message", "")})
+        _mark(state, "execute", started, request, ran=sum(1 for r in results if r["ok"]))
         refresh_and_save(state)
         failed = [r for r in results if not r["ok"]]
         view = session_view(state)
@@ -681,6 +715,68 @@ def audit(session_id: str) -> Dict[str, Any]:
     }
 
 
+@app.get("/api/sessions/{session_id}/actions/{action_id}/preview")
+def preview(session_id: str, action_id: str) -> Dict[str, Any]:
+    """Exactly what running this contract would create, built by the same code as execution.
+    Nothing is sent to Google."""
+    state = load_state(session_id)
+    action = _board_action(state, action_id)
+    decision = state_store.get_decision(action.get("decision_id", "")) if action.get("decision_id") else None
+    subject, body = execution.compose_followup(action, decision)
+    to = execution.owner_email(action.get("owner", ""))
+    return {
+        "gmail": {"to": to, "subject": subject, "body": body, "sent": False},
+        "calendar": {"title": subject, "date": execution.parse_due_date(action.get("due_date", "")).isoformat(), "attendee": to, "description": body},
+        "connected": presentation.followups_connected(),
+        "approval": presentation.approval_label(action.get("status", "")),
+    }
+
+
+@app.get("/api/sessions/{session_id}/proof")
+def proof(session_id: str) -> Dict[str, Any]:
+    """What each Google Cloud service did for this session: resource, last call, trace id, ids, counts."""
+    state = load_state(session_id)
+    p = state.get("proof") or {}
+    board = workflow_session.session_board(state)
+    decision_id = state.get("session_decision_id") or ""
+    events = []
+    if decision_id:
+        ids = {a.get("action_id") for a in board}
+        events = [e for e in state_store.load_events(limit=1000) if e.get("decision_id") == decision_id or e.get("action_id") in ids]
+    executed = [a for a in board if a.get("execution_status") == ExecutionStatus.EXECUTED]
+    uploads = state.get("uploads") or []
+    rows = [
+        {"service": "Vertex AI Search", "resource": f"engine {CONFIG.vertex_search_engine_id or '—'} · data store {CONFIG.vertex_search_data_store_id or '—'}",
+         "used_for": "Knowledge search", "last": p.get("retrieve"),
+         "detail": (p.get("retrieve") or {}).get("mode", "")},
+        {"service": "Gemini on Vertex AI via ADK", "resource": f"model {CONFIG.gemini_model} · agent WorkPilot Orchestrator",
+         "used_for": "Analyze, Action Contracts, resume", "last": p.get("resume") or p.get("contracts") or p.get("analyze"),
+         "detail": (p.get("analyze") or {}).get("mode", "")},
+        {"service": "Document AI", "resource": "OCR processor" if CONFIG.document_ai_processor_id else "not configured",
+         "used_for": "Uploaded scans", "last": {"at": uploads[-1].get("uploaded_at"), "ms": uploads[-1].get("duration_ms")} if uploads else None,
+         "detail": ", ".join(f"{u.get('name')} ({u.get('parser')})" for u in uploads)},
+        {"service": "Firestore", "resource": f"workpilot_workspaces/{CONFIG.workspace}",
+         "used_for": "Session, decision, actions, audit", "last": {"at": (state_store.get_session(session_id) or {}).get("updated_at")},
+         "detail": f"session {session_id}" + (f" · decision {decision_id}" if decision_id else "") + f" · {len(events)} audit events"},
+        {"service": "BigQuery", "resource": f"{CONFIG.bigquery_dataset}.{CONFIG.bigquery_table}" if analytics.configured() else "not configured",
+         "used_for": "Event analytics", "last": None,
+         "detail": "", "count": analytics.decision_event_count(decision_id)},
+        {"service": "Gmail / Calendar", "resource": "drafts and events via user OAuth" if presentation.followups_connected() else "not connected",
+         "used_for": "Approved actions only", "last": p.get("execute"),
+         "detail": ", ".join(f"{a.get('action_id')}" for a in executed)},
+        {"service": "Cloud Run", "resource": f"service {os.getenv('K_SERVICE', 'local')} · revision {os.getenv('K_REVISION', '—')}",
+         "used_for": "Runs the UI, API and agent", "last": None, "detail": os.getenv("CLOUD_RUN_REGION", "")},
+    ]
+    return {
+        "rows": rows,
+        "ids": {"session": session_id, "decision": decision_id, "actions": [a.get("action_id") for a in board]},
+        "events": len(events),
+        # Executed work with no recorded approver. execute_followup refuses that, so this should read 0.
+        "executed": len(executed),
+        "unapproved_executions": sum(1 for a in executed if not a.get("approved_by")),
+    }
+
+
 @app.post("/api/sessions/{session_id}/actions/{action_id}/outcome/suggest")
 def suggest(session_id: str, action_id: str, body: Outcome) -> Dict[str, Any]:
     """The agent proposes an outcome status. Nothing is recorded: a person confirms."""
@@ -711,12 +807,14 @@ def confirm(session_id: str, action_id: str, body: Outcome) -> Dict[str, Any]:
 
 
 @app.post("/api/sessions/{session_id}/resume")
-def resume(session_id: str) -> Dict[str, Any]:
+def resume(session_id: str, request: Request) -> Dict[str, Any]:
     with _lock(session_id):
+        started = time.perf_counter()
         state = load_state(session_id)
         if not workflow_session.agent_status(state)["can_resume"]:
             raise HTTPException(409, "The agent is waiting for a person to approve or reject every Action Contract")
         state.update(workflow_session.resume_agent(state, retriever(state)))
+        _mark(state, "resume", started, request, fallback=bool((state.get("agent_message") or {}).get("fallback")))
         refresh_and_save(state)
         return session_view(state)
 

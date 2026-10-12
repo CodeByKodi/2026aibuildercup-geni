@@ -232,3 +232,35 @@ def test_resume_before_execution_completes_and_stays_honest(client):
     msg = client.post(f"/api/sessions/{sid}/resume").json()["agent_message"]
     assert msg["ok"] is True and msg["readiness"] == "NOT READY"
     assert client.get(f"/api/sessions?ids={sid}").json()[0]["readiness"] == "NOT READY"
+
+
+
+def test_proof_records_each_step_and_counts_unapproved_execution(client, live_adapter):
+    sid, view = _through_contracts(client)
+    for c in view["contracts"]:
+        client.post(f"/api/sessions/{sid}/actions/{c['action_id']}/approve")
+    client.post(f"/api/sessions/{sid}/execute-approved", json={"type": "gmail_draft"})
+    proof = client.get(f"/api/sessions/{sid}/proof").json()
+    rows = {r["service"]: r for r in proof["rows"]}
+    assert rows["Vertex AI Search"]["last"]["passages"] > 0 and rows["Vertex AI Search"]["last"]["ms"] >= 0
+    assert rows["Gemini on Vertex AI via ADK"]["last"]["at"]
+    assert rows["Gmail / Calendar"]["last"]["ran"] == len(view["contracts"])
+    assert proof["ids"]["decision"].startswith("DEC-") and len(proof["ids"]["actions"]) == len(view["contracts"])
+    assert proof["executed"] == len(view["contracts"]) and proof["unapproved_executions"] == 0
+    assert proof["events"] > 0
+
+    impact = client.get(f"/api/sessions/{sid}/impact").json()["impact"]
+    assert impact["baseline_minutes"] > 0 and impact["workpilot_seconds"] >= 0
+    assert set(impact["workpilot_steps"]) >= {"retrieve", "analyze", "contracts", "execute"}
+    # The step record survives a reload (it is saved with the session).
+    assert client.get(f"/api/sessions/{sid}/proof").json()["rows"][0]["last"]["passages"] > 0
+
+
+def test_preview_shows_the_exact_draft_without_sending(client, live_adapter):
+    sid, view = _through_contracts(client)
+    c = view["contracts"][0]
+    pv = client.get(f"/api/sessions/{sid}/actions/{c['action_id']}/preview").json()
+    assert pv["gmail"]["sent"] is False and c["title"] in pv["gmail"]["subject"]
+    assert c["action_id"] in pv["gmail"]["body"] and pv["calendar"]["date"]
+    assert pv["approval"] == "Pending"
+    assert live_adapter.calls == []  # a preview never calls Google
