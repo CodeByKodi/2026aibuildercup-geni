@@ -205,14 +205,14 @@ def test_agent_pauses_at_the_human_gate_and_resumes_from_firestore(agent, retrie
 
     status = workflow_session.agent_status(state)
     assert status["mode"] == "paused" and status["stage"] == "APPROVAL" and status["can_resume"] is False
-    assert "waiting for a person to approve 3 of 3" in status["text"]
+    assert "Waiting for you · approve or reject 3 of 3 actions" in status["text"]
 
     for aid in state["session_action_ids"]:  # people approve and execute
         workflow.approve_and_execute(aid, None, approved_by="Maya")
         workflow.execute_action(aid, execution.GMAIL_DRAFT)
     state["actions"] = state_store.load_actions()
     status = workflow_session.agent_status(state)
-    assert status["can_resume"] and status["mode"] == "paused" and "confirm on Outcome & Impact" in status["text"]
+    assert status["can_resume"] and status["mode"] == "paused" and "confirm 3 outcomes on Outcome & Impact" in status["text"]
 
     offered = agent(resume_script)
     state.update(workflow_session.resume_agent(state, retriever))

@@ -33,7 +33,7 @@ test.describe("React · question to human gate", () => {
     await expect(rows).toHaveCount(contracts);
     for (let i = 0; i < contracts; i++) await expect(rows.nth(i)).toHaveAttribute("data-approval", "Pending");
     await expect(tid(page, "agent-status")).toHaveAttribute("data-mode", "paused");
-    await expect(tid(page, "agent-status")).toContainText(`waiting for a person to approve ${contracts} of ${contracts}`);
+    await expect(tid(page, "agent-status")).toContainText(`approve or reject ${contracts} of ${contracts}`);
     await expect(tid(page, "next-outcome")).toBeDisabled();
     await assertExecutionBacked(page);
 
@@ -68,6 +68,7 @@ test.describe("React · question to human gate", () => {
     await expect(tid(page, "tab-approved")).toContainText("(1)");
     await expect(tid(page, "tab-rejected")).toContainText("(1)");
     await expect(tid(page, "executed-count")).toHaveText("1 approved action ready to run");
+    await expect(tid(page, "agent-status")).toContainText("Waiting for you · run 1 approved action.");
     await expect(rows.nth(0)).toHaveAttribute("data-execution", "Not started");
     await assertExecutionBacked(page);
 

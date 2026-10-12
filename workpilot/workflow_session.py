@@ -111,6 +111,10 @@ def next_step(current: str) -> str:
     return _NEXT_STEP.get(current, "")
 
 
+def _plural(n: int, word: str) -> str:
+    return word if n == 1 else f"{word}s"
+
+
 def agent_status(state: Mapping[str, Any]) -> Dict[str, Any]:
     """What the agent is doing, read from the saved workflow: working, paused at the human gate, or resumable.
 
@@ -122,14 +126,24 @@ def agent_status(state: Mapping[str, Any]) -> Dict[str, Any]:
     p = presentation.board_progress(board)
     can_resume = p["total"] > 0 and p["pending"] == 0
     if current == "APPROVAL":
-        mode, text = "paused", f"Agent paused · waiting for a person to approve {p['pending']} of {p['total']} Action Contracts"
+        mode, text = "paused", (
+            f"Waiting for you · approve or reject {p['pending']} of {p['total']} {_plural(p['total'], 'action')}. "
+            "The agent stays paused until a person decides."
+        )
     elif current == "OUTCOME" and p["executed"] < p["approved"]:
-        mode, text = "paused", f"Agent paused · {p['approved'] - p['executed']} approved action(s) waiting to be executed by a person on Approval"
+        waiting = p["approved"] - p["executed"]
+        mode, text = "paused", (
+            f"Waiting for you · run {waiting} approved {_plural(waiting, 'action')}. "
+            "The agent stays paused until the work runs and a person confirms what happened."
+        )
     elif current == "OUTCOME":
         open_n = p["measurable"] - p["measured"]
-        mode, text = "paused", f"Agent paused · {open_n} outcome(s) waiting for a person to confirm on Outcome & Impact"
+        mode, text = "paused", (
+            f"Waiting for you · confirm {open_n} {_plural(open_n, 'outcome')} on Outcome & Impact. "
+            "The agent resumes when the last one is confirmed."
+        )
     elif current == "IMPACT":
-        mode, text = "ready", "All outcomes recorded · resume the agent to reassess readiness and impact"
+        mode, text = "ready", "All outcomes recorded · re-check readiness with the agent on Outcome & Impact"
     else:
         mode, text = "working", f"Agent next: {next_step(current)}"
     return {"stage": current, "mode": mode, "text": text, "can_resume": can_resume}
