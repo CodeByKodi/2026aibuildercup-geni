@@ -21,7 +21,7 @@ npm ci && npx playwright install chromium
 node demo/record-demo.mjs --out ./demo-out
 ```
 
-Options: `--url <deployment>` (default: the final panel URL), `--no-voice` (captions only), `--voice Samantha`,
+Options: `--url <deployment>` (default: the final panel URL), `--no-voice` (captions only), `--voice Daniel` (any macOS voice),
 `--rate 178`.
 
 Needs ffmpeg. The synthetic voice needs macOS `say`.

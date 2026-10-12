@@ -24,7 +24,7 @@ const arg = (name, fallback) => {
 const URL = arg('url', 'https://workpilot-geni-475836937080.asia-south1.run.app')
 const OUT = path.resolve(arg('out', 'demo-out'))
 const VOICE = !process.argv.includes('--no-voice')
-const VOICE_NAME = arg('voice', 'Samantha')
+const VOICE_NAME = arg('voice', 'Daniel')
 const RATE = arg('rate', '178')
 const FRAMES = path.join(OUT, 'frames')
 const CUES = path.join(OUT, 'voice')
@@ -56,8 +56,9 @@ const cues = [] // { out, file, text }
 const beats = [] // { out, title }
 const facts = {}
 
+let clips = 0
 function synth(text) {
-  const file = path.join(CUES, `cue-${String(cues.length + 1).padStart(2, '0')}.aiff`)
+  const file = path.join(CUES, `cue-${String(++clips).padStart(2, '0')}.aiff`) // one file per sentence
   if (!VOICE) return { file: null, seconds: Math.max(1.6, text.split(/\s+/).length / 2.8) }
   execFileSync('say', ['-v', VOICE_NAME, '-r', RATE, '-o', file, text])
   const seconds = parseFloat(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file]).toString())
@@ -439,6 +440,12 @@ const lines = [`# Demo timeline (${mmss(total)} total)`, '', `Recorded ${new Dat
   '## Narration (with cue times)', '', ...cues.map((c) => `- **${mmss(c.out)}** ${c.text}`), '',
   '## Facts read from the screen', '', '```json', JSON.stringify(facts, null, 2), '```']
 fs.writeFileSync(path.join(OUT, 'timeline.md'), lines.join('\n'))
+fs.writeFileSync(path.join(OUT, 'cues.json'), JSON.stringify(cues.map((c) => ({ ...c, file: c.file && path.basename(c.file) })), null, 2))
+// No two voice clips may overlap.
+for (let i = 0; i + 1 < cues.length; i++) {
+  const end = cues[i].out + cues[i].seconds
+  if (end > cues[i + 1].out + 0.05) console.error(`WARNING: voice overlap at ${mmss(cues[i].out)} (${(end - cues[i + 1].out).toFixed(2)} s)`)
+}
 fs.rmSync(FRAMES, { recursive: true, force: true })
 console.log(JSON.stringify({ video: final, captionsOnly: silent, seconds: Math.round(total), session: sessionId, frames: frames.length, facts }, null, 2))
 if (total > 180) console.error(`WARNING: ${mmss(total)} is over the 3:00 limit`)
