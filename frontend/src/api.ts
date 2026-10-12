@@ -36,7 +36,7 @@ export interface Evidence { source: string; excerpt: string; locator: string; se
 export interface Progress { total: number; pending: number; approved: number; rejected: number; executed: number; measurable: number; measured: number }
 export interface OutcomeRow { title: string; owner: string; execution: string; expected: string; actual: string; outcome: string; tone: string; state: string }
 export interface Impact {
-  baseline_minutes: number; workpilot_seconds: number; workpilot_steps: string[]; net_minutes: number
+  baseline_minutes: number; baseline_label: string; workpilot_seconds: number; workpilot_steps: string[]; net_minutes: number
   hours: number | null; hours_label: string; tiles: { value: string; label: string; tone: string }[]
   metrics: Record<string, number>; assumptions: Record<string, unknown>; breakdown_minutes: Record<string, number>
   per_task: Record<string, unknown>[]; methodology: string; computed_at: string

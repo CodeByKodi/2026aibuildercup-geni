@@ -51,7 +51,7 @@ export function ProofStrip({ s, cfg }: { s: Session | null; cfg: Config }) {
       <Cell k="owners" v={a ? String(a.stats.owners) : '—'} testid="ps-owners" />
       <Cell k="approval conditions" v={a ? String(a.stats.conditions) : '—'} testid="ps-conditions" />
       <Cell k="manual baseline (estimate)" testid="ps-manual" v={impact ? `${Math.round(impact.baseline_minutes)} min` : '—'}
-        hint={impact ? `From the impact formula; estimated time saved ${impact.hours_label}. See How this is computed on Outcome & Impact.` : 'Shown once a decision is recorded'} />
+        hint={impact ? `Formula-based estimate, fixed once the decision is recorded. Estimated time saved = manual baseline − WorkPilot run = ${impact.hours_label}. See How this is computed on Outcome & Impact.` : 'Shown once a decision is recorded'} />
       <Cell k="WorkPilot run (measured)" testid="ps-workpilot" v={impact ? seconds(impact.workpilot_seconds * 1000) : '—'}
         hint={impact ? `Server time of: ${impact.workpilot_steps.join(', ') || 'no step yet'}` : 'Shown once a decision is recorded'} />
       <Cell k="executed without human approval" v={`${unapproved}`} tone={unapproved ? 'bad' : 'good'} testid="ps-gate"

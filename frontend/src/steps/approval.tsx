@@ -94,6 +94,12 @@ export function ApprovalStep({ s, go, run, busy }: StepProps) {
   const rows = s.contracts.filter((c) => tab === 'All' || c.approval === tab)
   const count = { All: p.total, Approved: p.approved, Pending: p.pending, Rejected: p.rejected }
   const waitingRun = p.approved - p.executed
+  const plural = (n: number) => `${n} approved action${n === 1 ? '' : 's'}`
+  const runNote = p.approved === 0
+    ? 'No approved actions ready to run yet'
+    : p.executed === 0
+      ? `${plural(p.approved)} ready to run`
+      : `${p.executed} of ${plural(p.approved)} run${waitingRun > 0 ? ` · ${waitingRun} ready to run` : ''}`
   return (
     <>
       <div className="panel-head">
@@ -104,7 +110,7 @@ export function ApprovalStep({ s, go, run, busy }: StepProps) {
         {(['All', 'Approved', 'Pending', 'Rejected'] as const).map((t) => (
           <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} data-testid={`tab-${t.toLowerCase()}`}>{t === 'All' ? 'All Actions' : t} ({count[t]})</button>
         ))}
-        <span className="tab-note" data-testid="executed-count">{p.executed} of {p.approved} approved run</span>
+        <span className="tab-note" data-testid="executed-count">{runNote}</span>
       </div>
       <div className="bulk-row">
         {p.pending > 0 ? (

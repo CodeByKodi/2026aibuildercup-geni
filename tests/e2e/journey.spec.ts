@@ -59,6 +59,7 @@ test.describe("React · question to human gate", () => {
     const rows = tid(page, "approval-row");
     const n = await rows.count();
     test.skip(n < 2, "needs two contracts to approve one and reject one");
+    await expect(tid(page, "executed-count")).toHaveText("No approved actions ready to run yet");
 
     await rows.nth(0).locator('[data-testid="approve"]').click();
     await expect(rows.nth(0)).toHaveAttribute("data-approval", "Approved");
@@ -66,6 +67,7 @@ test.describe("React · question to human gate", () => {
     await expect(rows.nth(1)).toHaveAttribute("data-approval", "Rejected");
     await expect(tid(page, "tab-approved")).toContainText("(1)");
     await expect(tid(page, "tab-rejected")).toContainText("(1)");
+    await expect(tid(page, "executed-count")).toHaveText("1 approved action ready to run");
     await expect(rows.nth(0)).toHaveAttribute("data-execution", "Not started");
     await assertExecutionBacked(page);
 
@@ -85,6 +87,10 @@ test.describe("React · question to human gate", () => {
     await expect(tid(page, "resume-agent")).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Demo Outcomes/ })).toHaveCount(0);
     await expect(tid(page, "impact-hours")).toHaveText(/\d+(\.\d+)?\s*(hrs?|min)/);
+    // Outcome subtracts the measured run from the same baseline the strip shows on every step.
+    const baseline = (await tid(page, "ps-manual").locator("b").innerText()).trim();
+    await expect(tid(page, "impact-formula")).toContainText(`${baseline} manual baseline (estimate)`);
+    await expect(tid(page, "impact-formula")).toContainText("WorkPilot run (measured)");
   });
 
   test("backward navigation keeps generated state", async ({ page }) => {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { StepNav, type StepProps } from '../App'
 import { api, type Audit, type Contract, type Impact, type Session, type Suggestion } from '../api'
-import { Avatar, Badge, Button, Empty, Icon, fmtDateTime } from '../ui'
+import { Avatar, Badge, Button, Empty, Icon, fmtDateTime, seconds } from '../ui'
 import { GcpProofCard } from '../proof'
 
 /** "3 of 3 approval conditions open", without repeating the status beside it. */
@@ -261,7 +261,13 @@ function ImpactCard({ s }: { s: Session }) {
     <div className="card impact" data-testid="impact">
       <div className="impact-head"><span>WORKPILOT IMPACT</span><Icon name="chart" size={22} /></div>
       <b className="impact-hours" data-testid="impact-hours">{i.hours_label}</b>
-      <span className="impact-sub">Estimated time saved · formula estimate, not measured time</span>
+      <span className="impact-sub">Estimated time saved = manual baseline − WorkPilot run</span>
+      <p className="impact-formula" data-testid="impact-formula">
+        <span title="Formula-based estimate; the same number as on every other screen">{Math.round(i.baseline_minutes)} min manual baseline (estimate)</span>
+        {' − '}
+        <span title={`Server time of: ${i.workpilot_steps.join(', ') || 'no step yet'}`}>{seconds(i.workpilot_seconds * 1000)} WorkPilot run (measured)</span>
+        {' = '}<b>{i.net_minutes} min</b> (formula-based estimate)
+      </p>
       <div className="tiles" data-testid="impact-tiles">
         {i.tiles.map((t) => <div key={t.label} className={`tile ${t.tone}`}><b>{t.value}</b><span>{t.label}</span></div>)}
       </div>
@@ -269,7 +275,12 @@ function ImpactCard({ s }: { s: Session }) {
         <summary>How this is computed</summary>
         <pre className="method">{i.methodology}</pre>
         {Object.keys(i.breakdown_minutes || {}).length ? (
-          <table className="mini"><tbody>{Object.entries(i.breakdown_minutes).map(([k, val]) => <tr key={k}><td>{k.replace(/_/g, ' ')}</td><td>{val} min</td></tr>)}</tbody></table>
+          <table className="mini" data-testid="impact-breakdown"><tbody>
+            {Object.entries(i.breakdown_minutes).map(([k, val]) => <tr key={k}><td>{k.replace(/_/g, ' ')}</td><td>{val} min</td></tr>)}
+            <tr><td><b>manual baseline (estimate)</b></td><td><b>{i.baseline_minutes} min</b></td></tr>
+            <tr><td>− WorkPilot run (measured)</td><td>{seconds(i.workpilot_seconds * 1000)}</td></tr>
+            <tr><td><b>= estimated time saved</b></td><td><b>{i.net_minutes} min</b></td></tr>
+          </tbody></table>
         ) : null}
         <p className="meta">Computed {fmtDateTime(i.computed_at)}</p>
       </details>

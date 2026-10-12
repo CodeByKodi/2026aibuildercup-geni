@@ -11,6 +11,8 @@ test.describe("React · impact, evidence and Google Cloud proof", () => {
     await expect(tid(page, "ps-passages")).not.toContainText("—");
     await expect(tid(page, "ps-analysis")).toContainText(/\d+(\.\d)? s/);
     await expect(tid(page, "ps-gate")).toContainText("0");
+    await expect(tid(page, "ps-manual")).toContainText(/\d+ min/);
+    const baseline = (await tid(page, "ps-manual").locator("b").innerText()).trim();
 
     // A citation opens the exact passages behind it and the claims it supports.
     await tid(page, "blocker-card").first().locator('[data-testid="cite"]').first().click();
@@ -33,6 +35,8 @@ test.describe("React · impact, evidence and Google Cloud proof", () => {
     await expect(tid(page, "audit-preview")).toBeVisible();
     await expect(tid(page, "ps-manual")).toContainText(/\d+ min/);
     await expect(tid(page, "ps-workpilot")).toContainText(/\d+(\.\d)? s/);
+    // The baseline is fixed when the decision is recorded: preparing contracts does not move it.
+    await expect(tid(page, "ps-manual")).toContainText(baseline);
 
     await step(page, "decision");
     const decisionId = await tid(page, "decision-id").innerText();

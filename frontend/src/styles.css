@@ -269,6 +269,8 @@ td b { display: block; }
 .impact-head { display: flex; justify-content: space-between; color: var(--primary-2); font-weight: 700; font-size: .85rem; letter-spacing: .04em; }
 .impact-hours { display: block; font-size: 2.6rem; font-weight: 800; color: var(--primary-2); margin-top: 6px; }
 .impact-sub { color: var(--muted); font-size: .82rem; }
+.impact-formula { margin: 6px 0 0; font-size: .82rem; color: var(--muted); overflow-wrap: anywhere; }
+.impact-formula b { color: inherit; }
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 8px; }
 .tile { background: var(--surface); border-radius: 10px; padding: 9px; text-align: center; }
 .tile b { display: block; font-size: 1.25rem; }
