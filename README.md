@@ -10,6 +10,8 @@ AI Builder Cup 2026 · Team **GENI** · Problem statement: **Future of Work & En
 | **Repository** | https://github.com/CodeByKodi/2026aibuildercup-geni |
 | **Demo video** | **[Watch the 2:32 demo](https://cdn.jsdelivr.net/gh/CodeByKodi/2026aibuildercup-geni@main/demo/workpilot-demo.mp4)** (plays in the browser) · [file in this repo](demo/workpilot-demo.mp4) · [storyboard and narration](demo/STORYBOARD.md) |
 
+The live prototype is public, with no sign-in, on Cloud Run (asia-south1), deployed from this repository.
+
 ## Problem statement
 
 Enterprise decisions such as *"can we ship this release?"* depend on knowledge scattered
@@ -45,16 +47,20 @@ p95 above the 1.5 s gate, UAT defect PAY-482), three owners and three approval c
 Once the approved actions have run and a person confirms each outcome as achieved, readiness
 moves to **READY FOR APPROVAL**. Go-live approval itself always stays with a person.
 
-## Key features
+## Demo
 
-- **Enterprise knowledge retrieval:** Vertex AI Search over the workspace, plus documents you upload (Document AI OCR for scanned PDFs and images).
-- **Evidence-backed reasoning:** every blocker cites its sources; a question the workspace cannot answer returns *Not found* instead of a guess.
-- **Decision Records:** verdict, rationale, evidence map and numbered approval conditions, kept in Decision Memory.
-- **Action Contracts:** owned and dated, with expected outcomes and evidence.
-- **Human approval:** no agent tool can approve, execute or confirm; execution counts only when Google returns an id.
-- **Outcome tracking:** expected vs actual, who confirmed it and when; only *achieved* closes a condition.
-- **Persistent workflow memory:** every step lives in Firestore; a session link restores it on any instance.
-- **Productivity impact:** estimated time saved from a published formula, with an audit trail of event ids.
+The [2:32 demo video](https://cdn.jsdelivr.net/gh/CodeByKodi/2026aibuildercup-geni@main/demo/workpilot-demo.mp4) walks the scenario above on the live URL, from the question to
+**NOT READY → READY FOR APPROVAL** and the impact. Clicks and talking points for a live run are in
+[docs/demo-flow.md](docs/demo-flow.md). [`demo/record-demo.mjs`](demo/record-demo.mjs) re-records the
+video against any deployment ([storyboard](demo/STORYBOARD.md)).
+
+## Guardrails and proof
+
+- **Cited, or not at all:** every blocker cites its sources, and a citation opens the exact passage. A question the workspace cannot answer returns *Not found* instead of a guess.
+- **People hold every gate:** no agent tool can approve, execute or confirm. Execution counts only when Gmail or Calendar returns an id, and only an outcome a person confirms as *achieved* closes a condition.
+- **Your own documents:** uploads are searched with the workspace; Document AI reads scanned PDFs and images.
+- **Persistent workflow memory:** every step lives in Firestore, so a session link restores it on any instance. Decision Memory keeps expected against actual outcomes.
+- **Impact you can check:** estimated time saved = manual baseline (a published formula) − WorkPilot's run (measured on the server). An Impact & Proof strip on every step, plus an audit trail of event ids in Firestore and BigQuery.
 
 ## Google Cloud technologies
 
@@ -159,26 +165,6 @@ gcloud auth login && gcloud auth application-default login
 
 Safe to rerun. Full setup, including Vertex AI Search, Document AI, BigQuery and the optional
 Gmail/Calendar consent: [docs/google-cloud-setup.md](docs/google-cloud-setup.md).
-
-## Demo flow (three minutes)
-
-**Start** → *Go-live readiness* → **Analyze with WorkPilot** → **Next: Analyze** →
-**Next: Decision** → **Prepare Action Contracts** → **Next: Approval** → **Approve all pending**
-→ **Run approved as Gmail drafts** → **Next: Outcome** → one line per action → **Ask the agent
-for each** → choose the status → **Confirm**; the agent resumes from Firestore by itself.
-Result: **NOT READY → READY FOR APPROVAL**, with receipts, outcome evidence, the audit trail
-and the impact estimate. Talking points: [docs/demo-flow.md](docs/demo-flow.md).
-
-## Live prototype
-
-**FINAL LIVE PROTOTYPE: https://workpilot-geni-475836937080.asia-south1.run.app**
-
-Public, no sign-in. Deployed from this repository with `./deploy-cloud-run.sh <project-id> asia-south1 workpilot-geni`
-on Cloud Run (asia-south1), with Gemini, ADK, Vertex AI Search, Document AI, Firestore,
-BigQuery and Gmail/Calendar live; check **System Status** in the app.
-
-- GitHub repository: https://github.com/CodeByKodi/2026aibuildercup-geni
-- Demo video (2:32, recorded on this URL by [`demo/record-demo.mjs`](demo/record-demo.mjs)): https://cdn.jsdelivr.net/gh/CodeByKodi/2026aibuildercup-geni@main/demo/workpilot-demo.mp4
 
 ## Repository and submission notes
 
