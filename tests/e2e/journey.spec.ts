@@ -68,7 +68,7 @@ test.describe("React · question to human gate", () => {
     await expect(tid(page, "tab-approved")).toContainText("(1)");
     await expect(tid(page, "tab-rejected")).toContainText("(1)");
     await expect(tid(page, "executed-count")).toHaveText("1 approved action ready to run");
-    await expect(tid(page, "agent-status")).toContainText("Waiting for you · run 1 approved action.");
+    await expect(tid(page, "agent-status")).toContainText(`approve or reject ${n - 2} of ${n} actions`); // one approved, one rejected
     await expect(rows.nth(0)).toHaveAttribute("data-execution", "Not started");
     await assertExecutionBacked(page);
 
