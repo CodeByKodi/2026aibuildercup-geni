@@ -165,7 +165,7 @@ Gmail/Calendar consent: [docs/google-cloud-setup.md](docs/google-cloud-setup.md)
 **Start** → *Go-live readiness* → **Analyze with WorkPilot** → **Next: Analyze** →
 **Next: Decision** → **Prepare Action Contracts** → **Next: Approval** → **Approve all pending**
 → **Run approved as Gmail drafts** → **Next: Outcome** → one line per action → **Ask the agent
-for each** → choose the status → **Confirm** → **Resume the agent**.
+for each** → choose the status → **Confirm**; the agent resumes from Firestore by itself.
 Result: **NOT READY → READY FOR APPROVAL**, with receipts, outcome evidence, the audit trail
 and the impact estimate. Talking points: [docs/demo-flow.md](docs/demo-flow.md).
 
