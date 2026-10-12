@@ -341,3 +341,47 @@ details summary { cursor: pointer; }
   .ba-arrow { transform: rotate(90deg); }
   .receipt-line, .evidence-line { margin-left: 0; }
 }
+
+/* ---------- impact & proof strip ---------- */
+.proof-strip { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; margin: 0 0 14px; }
+.proof-cell { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.proof-cell b { font-size: 1.05rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.proof-cell span { font-size: .7rem; color: var(--muted); line-height: 1.25; }
+.proof-cell.good { border-color: #b7e4c7; background: var(--green-soft); } .proof-cell.good b { color: #15803d; }
+.proof-cell.bad { border-color: #f5b5b5; background: var(--red-soft); } .proof-cell.bad b { color: #b91c1c; }
+
+/* ---------- citations and the evidence drawer ---------- */
+.tag.cite { border: 1px solid transparent; cursor: pointer; font: inherit; font-size: .75rem; display: inline-flex; gap: 4px; align-items: center; }
+.tag.cite:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.tag.cite:focus-visible { outline: 2px solid var(--primary); }
+.drawer-scrim { position: fixed; inset: 0; background: rgba(9, 22, 49, .35); z-index: 50; display: flex; justify-content: flex-end; }
+.drawer { width: min(560px, 100%); height: 100%; overflow-y: auto; background: var(--surface); padding: 20px 22px; box-shadow: -8px 0 24px rgba(15, 27, 51, .15); }
+.drawer-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
+.drawer h3 { font-size: 1.15rem; margin: 2px 0 4px; }
+.drawer h4 { font-size: .9rem; margin: 16px 0 6px; }
+.claims { margin: 0; padding-left: 18px; font-size: .88rem; }
+.claims li { margin-bottom: 6px; }
+.claims .meta { display: block; }
+.passage { border-left: 3px solid var(--primary); padding: 4px 12px; margin: 10px 0; }
+.passage blockquote { margin: 4px 0 0; font-size: .88rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ---------- contract previews ---------- */
+.preview-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.preview-btns .btn { padding: 6px 10px; font-size: .78rem; }
+.btn.ghost { background: transparent; color: var(--primary); border-color: transparent; }
+.contract .wide { grid-column: 1 / -1; }
+.preview { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 10px 12px; }
+.preview-meta { font-size: .8rem; color: var(--muted); margin-bottom: 6px; overflow-wrap: anywhere; }
+.preview-subject { font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
+.preview pre { white-space: pre-wrap; font-size: .78rem; margin: 0; max-height: 260px; overflow-y: auto; font-family: ui-monospace, Menlo, monospace; }
+.audit-list { list-style: none; margin: 0; padding: 0; font-size: .82rem; }
+.audit-list li { display: grid; grid-template-columns: 110px 1fr auto auto; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.gcp-proof summary { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.gcp-proof .table-wrap { margin-top: 10px; }
+.gcp-proof td code { font-size: .74rem; }
+
+@media (max-width: 1080px) { .proof-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 820px) {
+  .proof-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .audit-list li { grid-template-columns: 1fr auto; }
+}

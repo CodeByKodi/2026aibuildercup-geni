@@ -3,6 +3,7 @@ import { StepNav, type StepProps } from '../App'
 import { api, type Audit, type Contract, type Impact, type Session, type Suggestion } from '../api'
 import { Avatar, Badge, Button, Empty, Icon, fmtDateTime } from '../ui'
 import { AgentBanner } from './approval'
+import { GcpProofCard } from '../proof'
 
 /** "3 of 3 approval conditions open", without repeating the status beside it. */
 export function openLine(v: { status: string; headline: string } | null | undefined): string {
@@ -182,6 +183,7 @@ export function OutcomeStep({ s, cfg, go, run, busy }: StepProps) {
         </div>
         <ImpactCard s={s} />
       </div>
+      <GcpProofCard s={s} />
       <AuditCard audit={audit} />
       <StepNav prev="approval" go={go} />
     </>
@@ -201,7 +203,7 @@ function AuditCard({ audit }: { audit: Audit | null }) {
   return (
     <details className="card audit" data-testid="audit">
       <summary>
-        <b>Audit trail · {rows.length} events</b>{' '}
+        <b>Audit trail · {rows.length} key events</b>{rows.length < audit.events.length ? <span className="meta"> (of {audit.events.length} recorded)</span> : null}{' '}
         <span className="meta">stored in {audit.store}{audit.bigquery.configured ? ` · each also streamed to BigQuery ${audit.bigquery.table}` : ''}</span>
       </summary>
       <div className="table-wrap">

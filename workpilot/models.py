@@ -1,6 +1,6 @@
 """Core WorkPilot data model.
 
-Know → Decide → Approve → Act → Measure
+Knowledge → Decision → Action Contracts → Approval → Outcome
 
 DecisionRecord  : why a decision was made, on what evidence, by whom
 WorkAction      : an Action Contract derived from a decision

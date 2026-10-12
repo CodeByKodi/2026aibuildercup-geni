@@ -31,7 +31,7 @@ from .documents import MIME_TYPES, load_sample_documents, source_id_for, word_co
 from .config import CONFIG
 from .impact import compute_impact, methodology_markdown
 from .models import ActionStatus, ExecutionStatus, OutcomeStatus, utc_now
-from .retrieval import SessionRetriever
+from .retrieval import SessionRetriever, chunk_sections
 
 log = logging.getLogger("workpilot.api")
 
@@ -171,7 +171,7 @@ def source_cards(cited: Optional[set] = None, state: Optional[Dict[str, Any]] = 
                 "type": _type_label(name),
                 "bytes": path.stat().st_size if path.exists() else len(text.encode("utf-8")),
                 "words": word_count(text),
-                "chunks": int(rec.get("chunk_count") or 0),
+                "chunks": len(chunk_sections(text)),  # the sections the search ranks
                 "parser": str(rec.get("parser") or ""),
                 "registered": bool(rec),
                 "as_of": presentation.fmt_date(as_of) if as_of else "",
@@ -236,6 +236,7 @@ def contract_view(action: Dict[str, Any], receipts: Optional[Dict[str, Dict[str,
         "expected_outcome": action.get("expected_outcome", ""),
         "rationale": action.get("rationale", ""),
         "evidence": [presentation.friendly_source_name(e) for e in evidence],
+        "evidence_sources": [str(e) for e in evidence],
         "approved_by": action.get("approved_by", ""),
         "approved_at": action.get("approved_at", ""),
         "outcome_status": str(action.get("outcome_status") or OutcomeStatus.PENDING),
@@ -745,17 +746,25 @@ def proof(session_id: str) -> Dict[str, Any]:
         events = [e for e in state_store.load_events(limit=1000) if e.get("decision_id") == decision_id or e.get("action_id") in ids]
     executed = [a for a in board if a.get("execution_status") == ExecutionStatus.EXECUTED]
     uploads = state.get("uploads") or []
+    from . import adk_orchestrator, document_ai, enterprise_search
+
+    # Name the backend that actually served each step; locally that is not Google.
+    search_res = (f"engine {CONFIG.vertex_search_engine_id} · data store {CONFIG.vertex_search_data_store_id}"
+                  if enterprise_search.configured() else "not configured: local TF-IDF search")
+    model_res = (f"model {CONFIG.gemini_model} · agent WorkPilot Orchestrator" if adk_orchestrator.configured()
+                 else f"model {CONFIG.gemini_model} (no ADK agent)" if not CONFIG.demo_mode else "not called: DEMO_MODE synthesis")
+    store_res = f"workpilot_workspaces/{CONFIG.workspace}" if state_store.using_firestore() else "not configured: in-memory store"
     rows = [
-        {"service": "Vertex AI Search", "resource": f"engine {CONFIG.vertex_search_engine_id or '—'} · data store {CONFIG.vertex_search_data_store_id or '—'}",
+        {"service": "Vertex AI Search", "resource": search_res,
          "used_for": "Knowledge search", "last": p.get("retrieve"),
          "detail": (p.get("retrieve") or {}).get("mode", "")},
-        {"service": "Gemini on Vertex AI via ADK", "resource": f"model {CONFIG.gemini_model} · agent WorkPilot Orchestrator",
+        {"service": "Gemini on Vertex AI via ADK", "resource": model_res,
          "used_for": "Analyze, Action Contracts, resume", "last": p.get("resume") or p.get("contracts") or p.get("analyze"),
          "detail": (p.get("analyze") or {}).get("mode", "")},
-        {"service": "Document AI", "resource": "OCR processor" if CONFIG.document_ai_processor_id else "not configured",
+        {"service": "Document AI", "resource": "OCR processor" if document_ai.configured() else "not configured: local parsers",
          "used_for": "Uploaded scans", "last": {"at": uploads[-1].get("uploaded_at"), "ms": uploads[-1].get("duration_ms")} if uploads else None,
          "detail": ", ".join(f"{u.get('name')} ({u.get('parser')})" for u in uploads)},
-        {"service": "Firestore", "resource": f"workpilot_workspaces/{CONFIG.workspace}",
+        {"service": "Firestore", "resource": store_res,
          "used_for": "Session, decision, actions, audit", "last": {"at": (state_store.get_session(session_id) or {}).get("updated_at")},
          "detail": f"session {session_id}" + (f" · decision {decision_id}" if decision_id else "") + f" · {len(events)} audit events"},
         {"service": "BigQuery", "resource": f"{CONFIG.bigquery_dataset}.{CONFIG.bigquery_table}" if analytics.configured() else "not configured",

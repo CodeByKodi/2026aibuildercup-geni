@@ -1,4 +1,4 @@
-"""WorkPilot workflow: Know → Decide → Approve → Act → Measure.
+"""WorkPilot workflow: Knowledge → Decision → Action Contracts → Approval → Outcome.
 
 UI-independent orchestration of the use cases so the logic is testable and
 the UI stays thin. Every step writes Firestore state and an audit event, and

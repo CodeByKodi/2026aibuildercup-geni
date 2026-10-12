@@ -3,6 +3,7 @@ import { StepNav, type StepProps } from '../App'
 import { api, type Blocker, type Session } from '../api'
 import { Avatar, Badge, Button, Empty, Icon, fmtBytes, seconds } from '../ui'
 import { openLine } from './outcome'
+import { Cite } from '../proof'
 
 /** "AI-generated" only when Gemini actually produced it; otherwise the real mode. */
 export function ProducedBy({ mode }: { mode: string }) {
@@ -115,7 +116,7 @@ export function StartStep(props: StepProps) {
 // 2 · Knowledge
 // --------------------------------------------------------------------------
 export function KnowledgeStep(props: StepProps) {
-  const { s, cfg, go, startAnalysis, analysis, run, busy } = props
+  const { s, cfg, go, startAnalysis, analysis, run, busy, cite } = props
   const [stale, setStale] = useState(false)
   if (!s?.retrieved) return <Empty title="No search yet">Ask a question on Start first.</Empty>
   const r = s.retrieved
@@ -176,7 +177,7 @@ export function KnowledgeStep(props: StepProps) {
         <summary>Show the {r.evidence.length} retrieved passages</summary>
         {r.evidence.map((e) => (
           <div key={`${e.source}-${e.rank}`} className="evidence">
-            <div className="meta"><b>{e.rank}. {e.source}</b> · {e.locator} · score {e.score}</div>
+            <div className="meta">{e.rank}. <Cite source={e.source} onCite={cite} /> · {e.locator}{e.page ? ` · chunk ${e.page}` : ''}{Number(e.score) > 0 ? ` · relevance ${e.score}` : ''}</div>
             <p>{e.excerpt}</p>
           </div>
         ))}
@@ -240,7 +241,7 @@ function Progress({ run }: { run: StepProps['analysis'] }) {
   )
 }
 
-export function BlockerCard({ b }: { b: Blocker }) {
+export function BlockerCard({ b, onCite }: { b: Blocker; onCite: (source: string) => void }) {
   const initials = b.owner && !/unassigned|tbd/i.test(b.owner) ? b.owner.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() : ''
   return (
     <div className={`blocker p-${(b.priority || 'medium').toLowerCase()}`} data-testid="blocker-card">
@@ -250,7 +251,9 @@ export function BlockerCard({ b }: { b: Blocker }) {
         <div><span>Owner</span><span className="who"><Avatar name={b.owner || 'Unassigned'} initials={initials} /> {b.owner || 'Unassigned'}</span></div>
         <div><span>Due</span><span><Icon name="calendar" size={14} /> {b.due_date || 'TBD'}</span></div>
       </div>
-      {b.evidence.length ? <div className="ev-chips">{b.evidence.map((e) => <code key={e} className="tag">{e}</code>)}</div> : null}
+      {b.evidence.length
+        ? <div className="ev-chips">{b.evidence.map((e) => <Cite key={e} source={e} onCite={onCite} />)}</div>
+        : <div className="ev-chips"><Badge tone="warn">No cited source: insufficient evidence for this claim</Badge></div>}
     </div>
   )
 }
@@ -278,7 +281,7 @@ export function VerdictBanner({ s, initial }: { s: Session; initial?: boolean })
   )
 }
 
-export function AnalyzeStep({ s, go, analysis, startAnalysis }: StepProps) {
+export function AnalyzeStep({ s, go, analysis, startAnalysis, cite }: StepProps) {
   const [tab, setTab] = useState<'findings' | 'evidence'>('findings')
   const a = s?.analysis
   const showProgress = analysis.running || analysis.events.length > 0
@@ -312,13 +315,14 @@ export function AnalyzeStep({ s, go, analysis, startAnalysis }: StepProps) {
             <>
               <VerdictBanner s={s!} initial />
               {a.sections.finding ? <p className="finding" data-testid="finding">{a.sections.finding}</p> : null}
-              <div className="blocker-grid">{a.sections.blockers.map((b, i) => <BlockerCard key={i} b={b} />)}</div>
+              <div className="blocker-grid">{a.sections.blockers.map((b, i) => <BlockerCard key={i} b={b} onCite={cite} />)}</div>
+              <p className="meta">Click a source to see the exact passages retrieved from it and the claims it supports.</p>
             </>
           ) : (
             <div className="evidence-list open">
               {(s?.retrieved?.evidence || []).map((e) => (
                 <div key={`${e.source}-${e.rank}`} className="evidence">
-                  <div className="meta"><b>{e.rank}. {e.source}</b> · {e.locator} · score {e.score}</div>
+                  <div className="meta">{e.rank}. <Cite source={e.source} onCite={cite} /> · {e.locator}{e.page ? ` · chunk ${e.page}` : ''}{Number(e.score) > 0 ? ` · relevance ${e.score}` : ''}</div>
                   <p>{e.excerpt}</p>
                 </div>
               ))}

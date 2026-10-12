@@ -29,16 +29,25 @@ export interface Analysis {
 export interface Receipt { kind: string; reference: string; target: string; at: string }
 export interface Contract {
   action_id: string; title: string; owner: string; initials: string; due_date: string; due_label: string; priority: string
-  status: string; approval: string; execution: string; expected_outcome: string; rationale: string; evidence: string[]
+  status: string; approval: string; execution: string; expected_outcome: string; rationale: string; evidence: string[]; evidence_sources: string[]
   approved_by: string; approved_at: string; outcome_status: string; actual_outcome: string; receipt: Receipt | null
 }
-export interface Evidence { source: string; excerpt: string; locator: string; score: string; rank: string }
+export interface Evidence { source: string; excerpt: string; locator: string; section: string; page: string; score: string; rank: string }
 export interface Progress { total: number; pending: number; approved: number; rejected: number; executed: number; measurable: number; measured: number }
 export interface OutcomeRow { title: string; owner: string; execution: string; expected: string; actual: string; outcome: string; tone: string; state: string }
 export interface Impact {
+  baseline_minutes: number; workpilot_seconds: number; workpilot_steps: string[]; net_minutes: number
   hours: number | null; hours_label: string; tiles: { value: string; label: string; tone: string }[]
   metrics: Record<string, number>; assumptions: Record<string, unknown>; breakdown_minutes: Record<string, number>
   per_task: Record<string, unknown>[]; methodology: string; computed_at: string
+}
+export interface StepMark { at: string; ms?: number; trace?: string; mode?: string; passages?: number; ran?: number; fallback?: boolean }
+export interface ProofRow { service: string; resource: string; used_for: string; last: StepMark | null; detail: string; count?: number | null }
+export interface Proof { rows: ProofRow[]; ids: { session: string; decision: string; actions: string[] }; events: number; executed: number; unapproved_executions: number }
+export interface Preview {
+  gmail: { to: string; subject: string; body: string; sent: boolean }
+  calendar: { title: string; date: string; attendee: string; description: string }
+  connected: boolean; approval: string
 }
 export interface AuditEvent { event_id: string; event_type: string; action_id: string; at: string; by: string; detail: string; outcome_status: string }
 export interface Audit { events: AuditEvent[]; store: string; bigquery: { configured: boolean; table: string } }
@@ -109,6 +118,8 @@ export const api = {
   removeUpload: (sid: string, sourceId: string) => call<Session>(`/api/sessions/${sid}/documents/${sourceId}`, { method: 'DELETE' }),
   executeApproved: (sid: string, type: 'gmail_draft' | 'calendar_followup') => post<Session>(`/api/sessions/${sid}/execute-approved`, { type }),
   audit: (sid: string) => call<Audit>(`/api/sessions/${sid}/audit`),
+  proof: (sid: string) => call<Proof>(`/api/sessions/${sid}/proof`),
+  preview: (sid: string, aid: string) => call<Preview>(`/api/sessions/${sid}/actions/${aid}/preview`),
   impact: (sid: string) => call<{ impact: Impact | null }>(`/api/sessions/${sid}/impact`),
   sessions: (ids: string[]) => call<SessionSummary[]>(`/api/sessions?ids=${encodeURIComponent(ids.join(','))}`),
   memory: (ids: string[]) => call<MemoryEntry[]>(`/api/memory?ids=${encodeURIComponent(ids.join(','))}`),

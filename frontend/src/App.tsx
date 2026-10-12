@@ -6,6 +6,7 @@ import { DecisionStep, ActionsStep } from './steps/decide'
 import { ApprovalStep } from './steps/approval'
 import { OutcomeStep } from './steps/outcome'
 import { SessionsPage, MemoryPage, StatusPage } from './pages'
+import { EvidenceDrawer, ProofStrip } from './proof'
 
 export const STEPS = [
   { id: 'start', label: 'Start' },
@@ -32,6 +33,8 @@ export interface StepProps {
   begin: (question: string, scenarioId?: string) => Promise<void>
   /** The open session, or a new one when there is none or it already has a decision. */
   ensureSession: (question?: string, scenarioId?: string) => Promise<Session>
+  /** Open the evidence behind one cited source. */
+  cite: (source: string) => void
 }
 
 const grounded = (s: Session | null) => !!s?.analysis?.grounded
@@ -100,6 +103,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [analysis, setAnalysis] = useState<RunState>(IDLE)
   const [navOpen, setNavOpen] = useState(false)
+  const [citation, setCitation] = useState('')
 
   useEffect(() => {
     const { sid, step: wanted, page: p } = readUrl()
@@ -183,7 +187,8 @@ export default function App() {
     return <div className="boot">{error ? <p className="error">{error}</p> : <><span className="spinner dark" /> Loading WorkPilot…</>}</div>
   }
 
-  const props: StepProps = { s, cfg, busy, run, go, analysis, startAnalysis, begin, ensureSession }
+  const props: StepProps = { s, cfg, busy, run, go, analysis, startAnalysis, begin, ensureSession, cite: setCitation }
+  const showStrip = ['start', 'analyze', 'decision', 'actions', 'outcome'].includes(step)
   const persona = cfg.persona.match(/You are ([^,]+), ([^.]+)/)
   const personaName = persona?.[1] ?? 'Reviewer'
   const personaRole = persona?.[2] ?? ''
@@ -219,6 +224,7 @@ export default function App() {
         {page === 'workflow' ? (
           <>
             <Stepper s={s} step={step} go={go} />
+            {showStrip ? <ProofStrip s={s} cfg={cfg} /> : null}
             {error ? <div className="alert error" role="alert" data-testid="error">{error}</div> : null}
             <section className="panel" data-testid={`step-${step}`}>
               {step === 'start' && <StartStep {...props} />}
@@ -242,6 +248,7 @@ export default function App() {
           {s ? <> · Session <code data-testid="session-id">{s.session_id}</code></> : null}
         </footer>
       </main>
+      {citation && s ? <EvidenceDrawer s={s} source={citation} onClose={() => setCitation('')} /> : null}
     </div>
   )
 }
