@@ -47,14 +47,14 @@ def test_metrics_are_derived_from_records_and_assumptions():
     assert m["release_blockers_consolidated"] == 3
     assert m["followups_automated"] == 2
     assert m["followups_real"] == 1 and m["followups_demo"] == 1
-    # 60 reading + 15 actions + 10 decision + 30 blockers + 15 coordination (1 owner)
-    assert m["estimated_total_time_saved_hours"] == round(130 / 60, 2)
+    # 60 reading + 25 actions (5 identified) + 10 decision + 30 blockers + 15 coordination (1 owner)
+    assert m["estimated_total_time_saved_hours"] == round(140 / 60, 2)
     assert m["steps_removed"] >= 3
     assert len(impact["per_task"]) == 3
     assert impact["per_task"][0]["estimated_minutes"] == 5
-    assert m["estimated_weekly_time_saved_hours"] == round(130 / 60, 2)
+    assert m["estimated_weekly_time_saved_hours"] == round(140 / 60, 2)
     assert impact["breakdown_minutes"]["reading"] == 60.0
-    assert impact["breakdown_minutes"]["action_preparation"] == 15.0
+    assert impact["breakdown_minutes"]["action_preparation"] == 25.0
     assert impact["breakdown_minutes"]["decision_summarization"] == 10.0
     assert impact["breakdown_minutes"]["blocker_analysis"] == 30.0
     assert impact["breakdown_minutes"]["coordination"] == 15.0
@@ -95,6 +95,20 @@ def test_assumptions_change_the_estimate_transparently():
     slow = compute_impact(ImpactAssumptions(reading_words_per_minute=100))["metrics"]["estimated_manual_reading_avoided_hours"]
     assert (fast, slow) == (0.25, 1.0)
     text = methodology_markdown(ImpactAssumptions(reading_words_per_minute=250))
-    assert "250 words per minute" in text and "Estimated total time saved" in text
+    assert "250 words per minute" in text and "Manual baseline (formula estimate)" in text and "manual baseline − WorkPilot run" in text
 
 
+
+
+def test_baseline_is_fixed_when_the_decision_is_recorded():
+    """The analysis names the follow-ups and owners, so preparing contracts later does not move the baseline."""
+    state_store.log_event("action_identified", {"count": 3, "owners": 3}, decision_id="DEC-B")
+    state_store.log_event("blocker_identified", {"count": 3}, decision_id="DEC-B")
+    state_store.save_decision(DecisionRecord(decision_id="DEC-B", workspace_id="ws", question="q", finding="f", recommendation="r", rationale="x"))
+    before = compute_impact(decision_id="DEC-B", documents={})["metrics"]["estimated_total_time_saved_hours"]
+    for i, owner in enumerate(["Mei", "Arjun", "Lena"]):
+        state_store.save_action(
+            WorkAction(title=f"A{i}", owner=owner, due_date="TBD", priority="High", rationale="", source="a.md", decision_id="DEC-B").to_dict()
+        )
+    after = compute_impact(decision_id="DEC-B", documents={})["metrics"]["estimated_total_time_saved_hours"]
+    assert before == after > 0

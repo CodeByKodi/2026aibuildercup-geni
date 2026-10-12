@@ -77,6 +77,11 @@ def compute_impact(
     )
     owners = {str(a.get("owner") or "").strip() for a in actions if str(a.get("owner") or "").strip() and str(a.get("owner")).lower() != "unassigned"}
     blockers_consolidated = max(blockers_from_events, len(owners), 0)
+    # Owners the analysis named when the decision was recorded, so the manual baseline does not grow
+    # as Action Contracts are prepared later: it is the same number on every screen.
+    owners_identified = sum(
+        int((e.get("payload") or {}).get("owners", 0) or 0) for e in events if e.get("event_type") == "action_identified"
+    )
 
     # --- time estimates (trailing window → "weekly") ----------------------
     window_actions = _within(actions, since)
@@ -87,11 +92,10 @@ def compute_impact(
     window_owners = {str(a.get("owner") or "").strip() for a in window_actions if str(a.get("owner") or "").strip() and str(a.get("owner")).lower() != "unassigned"}
 
     reading_minutes = window_words / assumptions.reading_words_per_minute if assumptions.reading_words_per_minute else 0.0
-    action_minutes = len(window_actions) * assumptions.minutes_per_prepared_action
-    followup_minutes = len(window_execs) * assumptions.minutes_per_followup
+    action_minutes = max(len(window_actions), identified_from_events) * assumptions.minutes_per_prepared_action
     decision_minutes = len(window_decisions) * assumptions.minutes_per_decision
     blocker_minutes = blockers_consolidated * assumptions.minutes_per_blocker
-    coordination_minutes = len(window_owners) * assumptions.minutes_per_owner_coordination
+    coordination_minutes = max(len(window_owners), owners_identified) * assumptions.minutes_per_owner_coordination
     total_minutes = reading_minutes + action_minutes + decision_minutes + blocker_minutes + coordination_minutes
 
     all_time_reading_minutes = total_words / assumptions.reading_words_per_minute if assumptions.reading_words_per_minute else 0.0
@@ -140,7 +144,6 @@ def compute_impact(
             "decision_summarization": round(decision_minutes, 1),
             "blocker_analysis": round(blocker_minutes, 1),
             "coordination": round(coordination_minutes, 1),
-            "followups": round(followup_minutes, 1),
         },
         "inputs": {
             "total_words_analyzed": total_words,
@@ -172,13 +175,17 @@ METHODOLOGY = """
 - **Action Contracts prepared** — Action Contracts persisted by WorkPilot (`actions`).
 - **Decisions supported** — DecisionRecords created (`decisions`).
 - **Release blockers consolidated** — unique blockers / owners taken from analysis events, not a hardcoded count.
-- **Coordination effort avoided** — unique action owners × {coord:g} minutes.
+- **Coordination effort avoided** — unique owners (named by the analysis, or on the Action Contracts if more) × {coord:g} minutes.
 - **Steps removed** — count of completed copilot hops in scope (sources consulted, brief, contracts, approvals, verified outcomes). Not a stopwatch.
 - **Per-task minutes** — {act:g} min assumed per prepared Action Contract.
-- **Estimated total time saved** — over the trailing {days} days:
-  reading avoided + {act:g} min × actions prepared + {dec:g} min × decisions + {blk:g} min × blockers + coordination.
+- **Manual baseline (formula estimate)** — over the trailing {days} days:
+  reading avoided + {act:g} min × follow-up actions (identified by the analysis, or prepared if more)
+  + {dec:g} min × decisions + {blk:g} min × blockers + coordination.
+  Fixed once the decision is recorded, so every screen shows the same baseline.
+- **WorkPilot run (measured)** — server-measured time of this session's steps (retrieve, analyze, contracts, execute, resume).
+- **Estimated time saved** — manual baseline − WorkPilot run.
 
-These are estimates based on the stated assumptions, not measured user time. Assumptions are configurable via
+The baseline and time saved are estimates based on the stated assumptions, not measured user time. Assumptions are configurable via
 `IMPACT_READING_WPM`, `IMPACT_MINUTES_PER_ACTION`, `IMPACT_MINUTES_PER_DECISION`, `IMPACT_MINUTES_PER_BLOCKER`, `IMPACT_MINUTES_PER_OWNER`, `IMPACT_WINDOW_DAYS`.
 """
 

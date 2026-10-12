@@ -9,7 +9,7 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
-from . import ai, analytics, execution, scenario, state_store
+from . import ai, analytics, execution, presentation, scenario, state_store
 from .config import CONFIG, IMPACT
 from .documents import chunks_to_text, process_document, source_id_for, word_count
 from .models import ActionStatus, DecisionRecord, ExecutionStatus, SourceChunk, WorkAction, make_decision_id
@@ -185,7 +185,8 @@ def record_decision(
     )
     if decision.get("blockers"):
         count = len(decision["blockers"])
-        _emit("action_identified", {"count": count, "origin": "decision_analysis"}, decision_id=record.decision_id)
+        owners = len({str(b.get("owner")).strip() for b in decision["blockers"] if presentation.nonempty(b.get("owner"))})
+        _emit("action_identified", {"count": count, "owners": owners, "origin": "decision_analysis"}, decision_id=record.decision_id)
         _emit("blocker_identified", {"count": count, "origin": "decision_analysis"}, decision_id=record.decision_id)
         _emit("decision_created", {"decision_id": record.decision_id, "readiness": decision.get("readiness_status", "")}, decision_id=record.decision_id)
     return record

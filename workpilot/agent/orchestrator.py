@@ -78,8 +78,8 @@ You paused while people approved, executed and measured the work. This turn resu
 3. Reply as WorkPilot, in the first person, in at most three short sentences:
    what people have done since you paused (owners own the work; name approvers only as approved_by
    records them); the readiness status exactly as assess_readiness returned it and
-   what still stands between the release and go-live approval, naming who must act; the estimated time saved,
-   called an estimate. If everything is met, say all approval conditions are satisfied and the release is
+   what still stands between the release and go-live approval, naming who must act; the manual baseline from
+   calculate_impact, called a formula estimate. If everything is met, say all approval conditions are satisfied and the release is
    ready for approval by a person. Never say the release is approved.
 {GUARDRAILS}
 """

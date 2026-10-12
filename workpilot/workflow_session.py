@@ -207,7 +207,11 @@ def _resume_without_agent(state: Mapping[str, Any], decision_id: str) -> Dict[st
         if verdict["status"] == "READY FOR APPROVAL"
         else f"{verdict['headline']}."
     )
-    estimate = f" Estimated time saved: {presentation.hours_label(hours)} (formula estimate)." if hours is not None else ""
+    estimate = (
+        f" Manual baseline: {presentation.hours_label(hours)} (formula estimate); estimated time saved is this minus WorkPilot's measured run."
+        if hours is not None
+        else ""
+    )
     return {
         "agent_message": {
             "ok": True,

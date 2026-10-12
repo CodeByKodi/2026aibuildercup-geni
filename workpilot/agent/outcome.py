@@ -101,8 +101,9 @@ def make(run: AgentRun) -> List[Callable[..., Dict[str, Any]]]:
         return {
             "metrics": metrics,
             "assumptions": impact["assumptions"],
-            "summary": f"Estimated time saved: {presentation.hours_label(metrics.get('estimated_total_time_saved_hours'))} "
-            "(a formula estimate, not measured time)",
+            "summary": f"Manual baseline: {presentation.hours_label(metrics.get('estimated_total_time_saved_hours'))} "
+            "(a formula estimate, not measured time). Estimated time saved is this baseline minus WorkPilot's "
+            "server-measured run, shown on Outcome & Impact.",
         }
 
     return [evaluate_outcome, assess_readiness, calculate_impact]

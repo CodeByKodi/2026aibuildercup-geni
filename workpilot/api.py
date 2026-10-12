@@ -288,14 +288,17 @@ def impact_view(state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     # Manual baseline (formula estimate) next to WorkPilot's own run time (measured on the server).
     proof = state.get("proof") or {}
     workpilot_ms = sum(int((proof.get(k) or {}).get("ms") or 0) for k in _TIMED_STEPS)
+    # One formula on every screen: estimated time saved = manual baseline - WorkPilot run.
     baseline_min = float(m.get("estimated_total_time_saved_hours") or 0) * 60
+    net_min = max(baseline_min - workpilot_ms / 60000, 0)
     return {
         "baseline_minutes": round(baseline_min, 1),
+        "baseline_label": presentation.hours_label(baseline_min / 60),
         "workpilot_seconds": round(workpilot_ms / 1000, 1),
         "workpilot_steps": [k for k in _TIMED_STEPS if k in proof],
-        "net_minutes": round(max(baseline_min - workpilot_ms / 60000, 0), 1),
-        "hours": m.get("estimated_total_time_saved_hours"),
-        "hours_label": presentation.hours_label(m.get("estimated_total_time_saved_hours")),
+        "net_minutes": round(net_min, 1),
+        "hours": round(net_min / 60, 2),
+        "hours_label": presentation.hours_label(net_min / 60),
         "tiles": presentation.impact_tiles(m),
         "metrics": m,
         "assumptions": impact.get("assumptions"),
