@@ -34,3 +34,6 @@ blob-report/
 .vscode/
 .idea/
 .claude/
+
+# Submission deck and its sources (kept locally, not published)
+submission/
