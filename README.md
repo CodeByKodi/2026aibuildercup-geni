@@ -8,7 +8,7 @@ AI Builder Cup 2026 · Team **GENI** · Problem statement: **Future of Work & En
 |---|---|
 | **Live prototype** | **https://workpilot-geni-475836937080.asia-south1.run.app** |
 | **Repository** | https://github.com/CodeByKodi/2026aibuildercup-geni |
-| **Demo video** | _Link to be added_ |
+| **Demo video** | **[Watch the 2:32 demo](https://github.com/CodeByKodi/2026aibuildercup-geni/blob/main/demo/workpilot-demo.mp4)** · recorded on the live URL · [storyboard and narration](demo/STORYBOARD.md) |
 
 ## Problem statement
 
@@ -178,7 +178,7 @@ on Cloud Run (asia-south1), with Gemini, ADK, Vertex AI Search, Document AI, Fir
 BigQuery and Gmail/Calendar live; check **System Status** in the app.
 
 - GitHub repository: https://github.com/CodeByKodi/2026aibuildercup-geni
-- Demo video: _link to be added_
+- Demo video (2:32, recorded on this URL by [`demo/record-demo.mjs`](demo/record-demo.mjs)): https://github.com/CodeByKodi/2026aibuildercup-geni/blob/main/demo/workpilot-demo.mp4
 
 ## Repository and submission notes
 

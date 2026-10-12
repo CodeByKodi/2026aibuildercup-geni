@@ -1,5 +1,7 @@
 # WorkPilot AI · 3-minute demo video
 
+**Watch:** [workpilot-demo.mp4](workpilot-demo.mp4) (2:32, 1920×1080, Indian English narration with captions).
+
 Knowledge → Decision → **Approval** → Action → Outcome → Impact, recorded from the live Cloud Run deployment.
 
 `record-demo.mjs` drives the real app with Playwright. Nothing is mocked. Chrome's screencast captures the
@@ -36,26 +38,26 @@ Output in `--out`:
 | `workpilot-demo-captions.mp4` | Same video, silent: for recording your own voice-over |
 | `timeline.md` | Step and narration cue times for this take, and the facts read from the screen |
 
-## Screen sequence and timing (take of 12 Oct 2026, 2:41)
+## Screen sequence and timing (published take, 12 Oct 2026, 2:32, session `SES-f14595b573a6`)
 
 | At | Step | On screen | Wait (real → in video) |
 |---|---|---|---|
 | 0:00 | Title | Title card: WorkPilot AI, team GENI, the flow, the Google Cloud stack | none |
-| 0:10 | 1 · Ask | Go-live scenario chip; the question is typed; **Analyze with WorkPilot** | none |
-| 0:20 | 2 · Knowledge | Six source cards with real file metadata and what Vertex AI Search cited | ~3 s → 2 s |
-| 0:29 | 3 · Analyze | Analysis progress, then **NOT READY FOR GO-LIVE**, three blocker cards; a citation opens the evidence drawer | ~15 s → 5 s |
-| 0:54 | 4 · Decision | Decision Record: recommendation, rationale, three approval conditions | none |
-| 1:04 | 5 · Action Contracts | **Prepare Action Contracts**; first contract with its precondition; Gmail preview ("nothing sent") | ~15 s → 4 s |
-| 1:24 | 6 · Human approval | **Approve all pending**; **Run 3 approved as Gmail drafts**; receipts with Gmail ids | ~5 s → 3 s |
-| 1:38 | 7 · Outcome | "Waiting for you"; Maya types what happened; **Ask the agent for each**; status ACHIEVED; **Confirm** | ~40 s → 4 s, ~15 s → 4 s |
-| 2:07 | 8 · Ready for approval | Before NOT READY → now READY FOR APPROVAL; 3 of 3 conditions met; agent message from Firestore | none |
-| 2:19 | 9 · Impact | WorkPilot Impact 1.8 hrs; 108 min baseline − measured run; breakdown table | none |
-| 2:32 | Close | End card: the flow, live URL, repository | none |
+| 0:09 | 1 · Ask | Go-live scenario chip; the question is typed; **Analyze with WorkPilot** | none |
+| 0:18 | 2 · Knowledge | Six source cards with real file metadata and what Vertex AI Search cited | ~3 s → 2 s |
+| 0:26 | 3 · Analyze | Analysis progress, then **NOT READY FOR GO-LIVE**, three blocker cards; a citation opens the evidence drawer | ~15 s → 5 s |
+| 0:49 | 4 · Decision | Decision Record: recommendation, rationale, three approval conditions | none |
+| 0:59 | 5 · Action Contracts | **Prepare Action Contracts**; first contract with its precondition; Gmail preview ("nothing sent") | ~15 s → 4 s |
+| 1:17 | 6 · Human approval | **Approve all pending**; **Run 3 approved as Gmail drafts**; receipts with Gmail ids | ~5 s → 3 s |
+| 1:34 | 7 · Outcome | "Waiting for you"; Maya types what happened; **Ask the agent for each**; status ACHIEVED; **Confirm** | ~40 s → 4 s, ~15 s → 4 s |
+| 2:01 | 8 · Ready for approval | Before NOT READY → now READY FOR APPROVAL; 3 of 3 conditions met; agent message from Firestore | none |
+| 2:11 | 9 · Impact | WorkPilot Impact 1.8 hrs; 108 min baseline − measured run; breakdown table | none |
+| 2:24 | Close | End card: the flow, live URL, repository | none |
 
 The waits are what the badge showed in this take. They vary a little from run to run, but the in-video
 length of each sped-up wait is fixed, so the total stays about the same.
 
-## Narration (this take)
+## Narration (published take)
 
 > This is WorkPilot AI, from team GENI. It takes a team from scattered documents to an approved, executed and
 > measured decision, live on Google Cloud.
@@ -86,7 +88,7 @@ length of each sped-up wait is fixed, so the total stays about the same.
 > is now ready for approval. The final go-live decision stays with a person.
 >
 > The impact: about 1.8 hours saved on this one decision. That is a 108 minute manual baseline, minus
-> WorkPilot's measured 50 second run, with every assumption shown.
+> WorkPilot's measured 60 second run, with every assumption shown.
 >
 > WorkPilot AI. From knowledge to outcomes, with people in control.
 
