@@ -47,6 +47,7 @@ test.describe("React · three-minute demo path", () => {
     // Outcomes: a person writes what happened, the agent proposes, the person confirms.
     await tid(page, "next-outcome").click();
     await expect(tid(page, "readiness-status")).toHaveText(/NOT READY/);
+    await expect(tid(page, "next-step")).toHaveAttribute("data-next", "confirm");
     await expect(tid(page, "receipt-line")).toHaveCount(n);
     const forms = tid(page, "outcome-form");
     await expect(forms).toHaveCount(n);
@@ -66,9 +67,10 @@ test.describe("React · three-minute demo path", () => {
     await expect(tid(page, "readiness-status")).toHaveText(expected);
     await expect(tid(page, "before-after")).toContainText("NOT READY");
 
-    // The agent resumes from Firestore and agrees with the recorded state.
-    await tid(page, "resume-agent").click();
+    // Confirming the last outcome resumes the agent from Firestore by itself; no button to press.
     await expect(tid(page, "agent-message")).toHaveAttribute("data-ok", "true", { timeout: 240_000 });
+    await expect(tid(page, "resume-agent")).toHaveCount(0);
+    await expect(tid(page, "next-step")).toHaveCount(0);
     await expect(tid(page, "agent-message")).toContainText(expected === "READY FOR APPROVAL" ? /ready for approval/i : /AT RISK/);
 
     // Impact with its formula, and the audit trail behind it.

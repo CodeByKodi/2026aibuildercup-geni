@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { StepNav, type StepProps } from '../App'
 import { api, type Audit, type Contract, type Impact, type Session, type Suggestion } from '../api'
 import { Avatar, Badge, Button, Empty, Icon, fmtDateTime } from '../ui'
-import { AgentBanner } from './approval'
 import { GcpProofCard } from '../proof'
 
 /** "3 of 3 approval conditions open", without repeating the status beside it. */
@@ -38,7 +37,12 @@ export function OutcomeStep({ s, cfg, go, run, busy }: StepProps) {
   const live = s.contracts.filter((c) => c.approval !== 'Rejected')
   const open = live.filter((c) => c.outcome_status === 'PENDING' && c.execution === 'Executed')
   const msg = s.agent_message
-  const canResume = s.agent.can_resume && !(msg?.ok && s.agent_message_current)
+  const waitingRun = s.contracts.filter((c) => c.approval === 'Approved' && c.execution !== 'Executed').length
+  const allRecorded = live.length > 0 && live.every((c) => c.outcome_status !== 'PENDING')
+  // After every outcome is recorded the agent resumes on its own; a re-check is offered only when its view is out of date.
+  const canRecheck = allRecorded && s.agent.can_resume && !(msg?.ok && s.agent_message_current)
+  /** When the last outcome is confirmed, the agent resumes from Firestore by itself. */
+  const autoResume = async (out: Session) => (out.stage === 'IMPACT' && out.agent.can_resume ? api.resume(out.session_id) : out)
   const draft = (id: string): Draft => drafts[id] ?? { actual: '', status: '' }
   const patch = (id: string, d: Partial<Draft>) => setDrafts((all) => ({ ...all, [id]: { ...(all[id] ?? { actual: '', status: '' }), ...d } }))
   const confirmedBy = (id: string) => audit?.events.find((e) => e.action_id === id && e.event_type === 'outcome_verified')
@@ -65,7 +69,7 @@ export function OutcomeStep({ s, cfg, go, run, busy }: StepProps) {
       const d = draft(c.action_id)
       out = await api.confirm(s.session_id, c.action_id, d.actual.trim(), d.status)
     }
-    return out
+    return out ? autoResume(out) : out
   })
 
   return (
@@ -97,19 +101,38 @@ export function OutcomeStep({ s, cfg, go, run, busy }: StepProps) {
         <p className="meta">A condition closes only through an outcome a person confirmed as ACHIEVED; partially achieved keeps it open.</p>
       </div>
 
-      <AgentBanner s={s} />
+      {waitingRun > 0 ? (
+        <div className="next-step" data-testid="next-step" data-next="run">
+          <div>
+            <b><Icon name="pause" size={16} /> Waiting for you: {waitingRun} approved action{waitingRun === 1 ? " hasn't" : "s haven't"} run yet</b>
+            <span className="meta">The agent stays paused until the approved work runs and a person confirms what happened. Each run creates a real Gmail draft in the connected mailbox; nothing is sent.</span>
+          </div>
+          <Button icon="mail" busy={busy === 'run-all'} disabled={!!busy || !s.followups_connected} testid="run-all-outcome"
+            title={s.followups_connected ? undefined : 'Gmail is not connected on this deployment'}
+            onClick={() => run('run-all', () => api.executeApproved(s.session_id, 'gmail_draft'))}>Run {waitingRun} approved as Gmail drafts</Button>
+        </div>
+      ) : open.length > 0 ? (
+        <div className="next-step" data-testid="next-step" data-next="confirm">
+          <div>
+            <b><Icon name="pause" size={16} /> Waiting for you: confirm {open.length} outcome{open.length === 1 ? '' : 's'} below</b>
+            <span className="meta">Write what actually happened, ask the agent for its view if you like, choose the status and confirm. When the last one is confirmed, the agent resumes from Firestore and reassesses readiness.</span>
+          </div>
+        </div>
+      ) : null}
+      {busy === 'confirm-all' || busy.startsWith('confirm:') ? <p className="meta"><span className="spinner dark" /> Recording the outcome{open.length > 1 ? 's' : ''}; the agent resumes when the last one is in…</p> : null}
       {msg ? (
         <div className={`agent-msg${msg.ok ? (s.agent_message_current ? '' : ' stale') : ' failed'}`} data-testid="agent-message" data-ok={msg.ok} data-fallback={!!msg.fallback}>
           <b>{msg.fallback ? 'Readiness rechecked without the agent' : msg.ok ? 'Agent resumed from Firestore' : 'Agent could not resume'} · {fmtDateTime(msg.at)}</b>
           <p>{msg.text}</p>
           {msg.steps?.length ? <p className="meta">{msg.fallback ? 'Steps' : 'Tools'}: {msg.steps.join(' → ')}</p> : null}
-          {msg.ok && !s.agent_message_current ? <p className="meta">People have acted since; resume again for a current assessment.</p> : null}
         </div>
       ) : null}
-      {canResume ? (
+      {canRecheck ? (
         <div className="center-row left">
-          <Button kind="secondary" icon="play" busy={busy === 'resume'} onClick={() => run('resume', () => api.resume(s.session_id))} testid="resume-agent">Resume the agent</Button>
-          <span className="meta">The agent re-reads the saved workflow, checks action status, reassesses readiness and calculates impact. It cannot approve or confirm anything.</span>
+          <Button kind="secondary" icon="play" busy={busy === 'resume'} onClick={() => run('resume', () => api.resume(s.session_id))} testid="resume-agent">
+            {msg ? 'Re-check readiness with the agent' : 'Resume the agent'}
+          </Button>
+          <span className="meta">{msg ? 'People have acted since the agent last looked.' : 'The agent re-reads the saved workflow and reassesses readiness and impact. It cannot approve or confirm anything.'}</span>
         </div>
       ) : null}
 
@@ -165,7 +188,7 @@ export function OutcomeStep({ s, cfg, go, run, busy }: StepProps) {
                           <option value="">Outcome status…</option>
                           {cfg.outcome_statuses.filter((x) => x !== 'PENDING').map((x) => <option key={x} value={x}>{x.replace(/_/g, ' ')}</option>)}
                         </select>
-                        <Button onClick={() => run(`confirm:${c.action_id}`, () => api.confirm(s.session_id, c.action_id, d.actual.trim(), d.status))}
+                        <Button onClick={() => run(`confirm:${c.action_id}`, async () => autoResume(await api.confirm(s.session_id, c.action_id, d.actual.trim(), d.status)))}
                           busy={busy === `confirm:${c.action_id}`} disabled={!d.actual.trim() || !d.status || !!busy} testid="confirm-outcome">Confirm</Button>
                       </div>
                       {d.suggestion ? (

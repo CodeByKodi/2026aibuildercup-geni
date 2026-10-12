@@ -79,6 +79,10 @@ test.describe("React · question to human gate", () => {
     await expect(tid(page, "outcome-row").first()).toBeVisible();
     await expect(tid(page, "outcome-form")).toHaveCount(0);
     await expect(page.getByText(/Run this approved action on Approval before recording its outcome/).first()).toBeVisible();
+    // Outcome says what is next and offers the run itself, instead of a resume button with nothing to resume for.
+    await expect(tid(page, "next-step")).toHaveAttribute("data-next", "run");
+    await expect(tid(page, "run-all-outcome")).toBeVisible();
+    await expect(tid(page, "resume-agent")).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Demo Outcomes/ })).toHaveCount(0);
     await expect(tid(page, "impact-hours")).toHaveText(/\d+(\.\d+)?\s*(hrs?|min)/);
   });

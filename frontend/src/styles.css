@@ -342,6 +342,10 @@ details summary { cursor: pointer; }
   .receipt-line, .evidence-line { margin-left: 0; }
 }
 
+.next-step { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px solid #f5d08a; background: var(--amber-soft); border-radius: 12px; padding: 12px 16px; margin: 12px 0 4px; }
+.next-step > div { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 2px; }
+.next-step b { display: inline-flex; gap: 6px; align-items: center; color: #92400e; }
+
 /* ---------- impact & proof strip ---------- */
 .proof-strip { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; margin: 0 0 14px; }
 .proof-cell { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
