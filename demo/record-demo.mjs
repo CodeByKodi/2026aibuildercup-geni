@@ -26,6 +26,13 @@ const OUT = path.resolve(arg('out', 'demo-out'))
 const VOICE = !process.argv.includes('--no-voice')
 const VOICE_NAME = arg('voice', 'Aman')
 const RATE = arg('rate', '170')
+// Narration tone: 'soft' lowers the pitch about a semitone at the same speed, tames sibilance and highs,
+// and adds a faint room; 'plain' leaves the voice as macOS renders it. Timing is identical either way.
+const TONE = arg('tone', 'soft')
+const CLIP_FILTER = TONE === 'plain' ? 'aresample=48000'
+  : 'aresample=48000,asetrate=48000*0.94,aresample=48000,atempo=1/0.94,deesser=i=0.5,highshelf=f=4500:g=-5,'
+    + 'lowshelf=f=180:g=2,acompressor=threshold=0.125:ratio=2:attack=20:release=250'
+const MIX_FILTER = TONE === 'plain' ? 'apad' : 'aecho=0.8:0.6:18:0.12,loudnorm=I=-18:TP=-2,apad'
 const FRAMES = path.join(OUT, 'frames')
 const CUES = path.join(OUT, 'voice')
 fs.rmSync(OUT, { recursive: true, force: true })
@@ -425,12 +432,12 @@ if (VOICE) {
   cues.forEach((c, i) => {
     inputs.push('-i', c.file)
     const ms = Math.round(c.out * 1000)
-    filters.push(`[${i + 1}:a]aresample=48000,adelay=${ms}|${ms}[a${i}]`)
+    filters.push(`[${i + 1}:a]${CLIP_FILTER},adelay=${ms}|${ms}[a${i}]`)
   })
-  const mix = `${filters.join(';')};${cues.map((_, i) => `[a${i}]`).join('')}amix=inputs=${cues.length}:normalize=0,apad[aout]`
+  const mix = `${filters.join(';')};${cues.map((_, i) => `[a${i}]`).join('')}amix=inputs=${cues.length}:normalize=0,${MIX_FILTER}[aout]`
   final = path.join(OUT, 'workpilot-demo.mp4')
   execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', silent, ...inputs, '-filter_complex', mix, '-map', '0:v', '-map', '[aout]',
-    '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', final])
+    '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-shortest', '-movflags', '+faststart', final])
 }
 
 // Timeline and narration, for the storyboard and for recording a human voice-over.

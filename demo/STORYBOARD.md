@@ -22,7 +22,7 @@ node demo/record-demo.mjs --out ./demo-out
 ```
 
 Options: `--url <deployment>` (default: the final panel URL), `--no-voice` (captions only), `--voice Aman` (Indian English, male; any macOS voice works),
-`--rate 170`.
+`--rate 170`, `--tone soft` (default: slightly deeper, softer highs, faint room; `plain` for the raw voice).
 
 Needs ffmpeg. The synthetic voice needs macOS `say`.
 
